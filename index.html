@@ -311,9 +311,9 @@
         const FILE_NAME = "Final 1.xlsx"; // The file name in colleague's OneDrive
         const USE_COLLEAGUE_DRIVE = true; // Set to true to access colleague's file
         
-        console.log(`Searching for file: ${FILE_NAME} ${USE_COLLEAGUE_DRIVE ? 'in colleague\'s drive' : 'in shared items'}`);
+        console.log(`Searching for file: ${FILE_NAME} in shared items`);
         
-        // Method 1: Access colleague's drive directly
+        /* COMMENTED OUT - Method 1: Direct colleague's drive access (requires User.Read.All permission)
         if (USE_COLLEAGUE_DRIVE) {
           try {
             console.log(`Accessing ${COLLEAGUE_EMAIL}'s OneDrive...`);
@@ -369,8 +369,9 @@
             console.log("Colleague's drive access failed:", error.message);
           }
         }
+        */
         
-        /* COMMENTED OUT - Method 2: Fallback - Search in shared items (existing logic)
+        // Method 2: Search in shared items - this is the correct approach for shared files
         try {
           const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
           console.log("Fetching shared items from:", sharedItemsUrl);
@@ -382,6 +383,7 @@
           if (sharedResponse.ok) {
             const sharedData = await sharedResponse.json();
             console.log("Shared items found:", sharedData.value?.length || 0);
+            console.log("All shared items:", sharedData.value?.map(item => item.name));
             
             const targetFile = sharedData.value?.find(item => 
               item.name === FILE_NAME && item.file
@@ -400,13 +402,18 @@
                 console.log("File fetched successfully via shared items, size:", arrayBuffer.byteLength);
                 await processFileData(arrayBuffer);
                 return;
+              } else {
+                console.error("Failed to fetch file content:", fileResponse.status, fileResponse.statusText);
               }
+            } else {
+              console.log("File not found in shared items. Available files:", sharedData.value?.map(item => item.name));
             }
+          } else {
+            console.error("Failed to fetch shared items:", sharedResponse.status, sharedResponse.statusText);
           }
         } catch (error) {
-          console.log("Shared items method failed:", error.message);
+          console.error("Shared items method failed:", error);
         }
-        */
         
         /* COMMENTED OUT - Method 3: Final fallback - Search in current user's drive
         try {
