@@ -229,6 +229,20 @@
 
 
   <script>
+  // Button text constants
+  const BUTTON_TEXT = {
+    SIGN_IN: "Sign In",
+    REFRESH: "Refresh Data"
+  };
+
+  // Function to update sign-in button text
+  function updateSignInButtonText(text) {
+    const signInButton = document.querySelector('button[onclick="signIn()"]');
+    if (signInButton) {
+      signInButton.textContent = text;
+    }
+  }
+
   //Using Microsoft Graph API to read Excel files from OneDrive requires authentication
     const msalConfig = {
       auth: {
@@ -272,6 +286,9 @@
         // Call the function to load data from OneDrive
         await loadDataFromOneDrive(accessToken);
         
+        // Update button text to show refresh option
+        updateSignInButtonText(BUTTON_TEXT.REFRESH);
+        
       } catch (error) {
         console.error("Error during sign-in:", error);
         
@@ -289,12 +306,12 @@
 
     async function loadDataFromOneDrive(accessToken) {
       try {
-        // Use the correct path to your Excel file in OneDrive
-        // This should be the path relative to your OneDrive root
-        // If the file is in Desktop folder in OneDrive, use: "Desktop/Final 1.xlsx"
-        // If the file is in root of OneDrive, use just: "Final 1.xlsx"
-        const fileName = "Desktop/Final 1.xlsx"; // Update this path based on where your file is in OneDrive
-        const apiUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/content`;
+       
+        // const fileName = "Desktop/Final 1.xlsx";
+        // const apiUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/content`;
+        
+        const fileId = "01SUMSSZ4ICPLEJ3AQNNA3RMHWZYLAN3Q2"; // Get this from find-file-id.html
+        const apiUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`;
 
         console.log("Attempting to fetch file from:", apiUrl); // Debug log
 
@@ -307,6 +324,9 @@
         console.log("Response status:", fileResponse.status); // Debug log
 
         if (!fileResponse.ok) {
+          if (fileResponse.status === 404) {
+            throw new Error(`File not found: ${fileName}. Please ensure the file exists in your OneDrive Desktop folder.`);
+          }
           throw new Error(`Failed to fetch file: ${fileResponse.status} ${fileResponse.statusText}`);
         }
 
@@ -349,10 +369,7 @@
                     await loadDataFromOneDrive(tokenResponse.accessToken);
                     
                     // Update sign-in button text
-                    const signInButton = document.querySelector('button[onclick="signIn()"]');
-                    if (signInButton) {
-                        signInButton.textContent = 'Refresh Data';
-                    }
+                    updateSignInButtonText(BUTTON_TEXT.REFRESH);
                     
                 } catch (error) {
                     console.log("Silent token acquisition failed, user needs to sign in again");
