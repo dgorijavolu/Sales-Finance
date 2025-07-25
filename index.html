@@ -306,33 +306,95 @@
 
     async function loadDataFromOneDrive(accessToken) {
       try {
-       
-        // const fileName = "Desktop/Final 1.xlsx";
-        // const apiUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/${fileName}:/content`;
+        // 🎯 SOLUTION: Use Shared Items API (Works for files shared with current user)
+        // This approach finds files shared with the current user regardless of who owns them
         
-        const fileId = "01SUMSSZ4ICPLEJ3AQNNA3RMHWZYLAN3Q2"; // Get this from find-file-id.html
-        const apiUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`;
-
-        console.log("Attempting to fetch file from:", apiUrl); // Debug log
-
-        const fileResponse = await fetch(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
+        const fileName = "Sales_Report.xlsx";
+        console.log("Searching for shared file:", fileName); // Debug log
+        
+        // Method 1: Search in shared items
+        try {
+          const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
+          console.log("Fetching shared items from:", sharedItemsUrl);
+          
+          const sharedResponse = await fetch(sharedItemsUrl, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          
+          if (sharedResponse.ok) {
+            const sharedData = await sharedResponse.json();
+            console.log("Shared items found:", sharedData.value?.length || 0);
+            
+            // Find the specific file
+            const targetFile = sharedData.value?.find(item => 
+              item.name === fileName && item.file
+            );
+            
+            if (targetFile) {
+              console.log("Found target file in shared items:", targetFile.name);
+              const fileContentUrl = `https://graph.microsoft.com/v1.0/drives/${targetFile.remoteItem.parentReference.driveId}/items/${targetFile.remoteItem.id}/content`;
+              
+              const fileResponse = await fetch(fileContentUrl, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+              });
+              
+              if (fileResponse.ok) {
+                const arrayBuffer = await fileResponse.arrayBuffer();
+                console.log("File fetched successfully via shared items, size:", arrayBuffer.byteLength);
+                await processFileData(arrayBuffer);
+                return;
+              }
+            }
           }
-        });
-
-        console.log("Response status:", fileResponse.status); // Debug log
-
-        if (!fileResponse.ok) {
-          if (fileResponse.status === 404) {
-            throw new Error(`File not found: ${fileName}. Please ensure the file exists in your OneDrive Desktop folder.`);
-          }
-          throw new Error(`Failed to fetch file: ${fileResponse.status} ${fileResponse.statusText}`);
+        } catch (error) {
+          console.log("Shared items method failed:", error.message);
         }
-
-        const arrayBuffer = await fileResponse.arrayBuffer();
-        console.log("File fetched successfully, size:", arrayBuffer.byteLength); // Debug log
         
+        // Method 2: Fallback - Search in user's own drive
+        try {
+          console.log("Trying fallback: search in user's drive");
+          const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${fileName}')`;
+          const searchResponse = await fetch(searchUrl, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          
+          if (searchResponse.ok) {
+            const searchResults = await searchResponse.json();
+            const file = searchResults.value?.find(item => 
+              item.name === fileName && item.file
+            );
+            
+            if (file) {
+              console.log("Found file via search:", file.name);
+              const fileUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${file.id}/content`;
+              const fileResponse = await fetch(fileUrl, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+              });
+              
+              if (fileResponse.ok) {
+                const arrayBuffer = await fileResponse.arrayBuffer();
+                console.log("File fetched successfully via search, size:", arrayBuffer.byteLength);
+                await processFileData(arrayBuffer);
+                return;
+              }
+            }
+          }
+        } catch (error) {
+          console.log("Search method failed:", error.message);
+        }
+        
+        // If all methods fail
+        throw new Error(`File '${fileName}' not found in shared items or user's drive. Please ensure:\n1. File is shared with your account\n2. You have appropriate permissions\n3. File name is correct`);
+        
+      } catch (error) {
+        console.error("Error loading data:", error);
+        alert(`Error loading data: ${error.message}`);
+      }
+    }
+    
+    // Helper function to process file data
+    async function processFileData(arrayBuffer) {
+      try {
         // Use SheetJS to parse Excel - same as handleFileUpload
         const workbook = XLSX.read(arrayBuffer, { type: "array", cellDates: false });
         const firstSheetName = workbook.SheetNames[0];
@@ -343,11 +405,9 @@
         console.log("Raw Excel data first row:", jsonData[0]); // Debug log
         processExcelData(jsonData);
         
-        // document.getElementById("output").textContent = "Data loaded successfully!";
-        
       } catch (error) {
-        console.error("Error loading data:", error);
-        alert("Error loading data. Check console for details.");
+        console.error("Error processing file data:", error);
+        throw error;
       }
     }
 

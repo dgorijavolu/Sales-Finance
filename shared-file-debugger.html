@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared File Access Debugger</title>
+    <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0078d4;
+            text-align: center;
+        }
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #0078d4;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #0078d4;
+        }
+        button {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #106ebe;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #e7f3e7;
+            border: 1px solid #4caf50;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #ffe7e7;
+            border: 1px solid #f44336;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Shared File Access Debugger</h1>
+        <p style="text-align: center; color: #666;">Debug shared file access issues for organizational dashboards</p>
+
+        <div class="info">
+            <h4>🎯 Purpose</h4>
+            <p>This tool helps debug why employees can't access shared OneDrive files in your dashboard. It tests different file access methods and shows exactly what's happening.</p>
+        </div>
+
+        <div class="section">
+            <h3>Step 1: Sign In</h3>
+            <p>Sign in with the employee's account to test their access:</p>
+            <button id="signInBtn" onclick="signIn()">Sign In with Microsoft</button>
+            <div id="userInfo"></div>
+        </div>
+
+        <div class="section">
+            <h3>Step 2: Test File Access Methods</h3>
+            <p>Test different approaches to access the shared file:</p>
+            <button id="testSharedBtn" onclick="testSharedItems()" disabled>Test Shared Items API</button>
+            <button id="testSearchBtn" onclick="testSearch()" disabled>Test Search API</button>
+            <button id="testFileIdBtn" onclick="testFileId()" disabled>Test File ID API</button>
+            <button id="testAllBtn" onclick="testAllMethods()" disabled>Test All Methods</button>
+        </div>
+
+        <div class="section">
+            <h3>Step 3: Results</h3>
+            <div id="results"></div>
+        </div>
+
+        <div class="section">
+            <h3>Step 4: Recommendations</h3>
+            <div id="recommendations"></div>
+        </div>
+    </div>
+
+    <script>
+        // MSAL Configuration - use your settings
+        const msalConfig = {
+            auth: {
+                clientId: "57343fc8-1f4e-40ab-87f4-3f86782b469a",
+                authority: "https://login.microsoftonline.com/e1c5d9ee-a951-451e-8432-642c23d40071",
+                redirectUri: window.location.origin + window.location.pathname
+            },
+            cache: {
+                cacheLocation: "localStorage",
+                storeAuthStateInCookie: false
+            }
+        };
+
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
+        let accessToken = null;
+        const fileName = "Final 1.xlsx";
+        const fileId = "01SUMSSZ4ICPLEJ3AQNNA3RMHWZYLAN3Q2";
+
+        async function signIn() {
+            try {
+                document.getElementById('signInBtn').disabled = true;
+                document.getElementById('signInBtn').textContent = 'Signing in...';
+
+                const loginResponse = await msalInstance.loginPopup({
+                    scopes: ["Files.Read", "Sites.Read.All"],
+                    prompt: "select_account"
+                });
+
+                const tokenResponse = await msalInstance.acquireTokenSilent({
+                    scopes: ["Files.Read", "Sites.Read.All"],
+                    account: loginResponse.account
+                });
+
+                accessToken = tokenResponse.accessToken;
+
+                // Show user info
+                const userInfo = document.getElementById('userInfo');
+                userInfo.innerHTML = `
+                    <div class="status success">
+                        ✅ Signed in as: ${loginResponse.account.username}<br>
+                        📧 Name: ${loginResponse.account.name || 'N/A'}<br>
+                        🏢 Tenant: ${loginResponse.account.tenantId}
+                    </div>
+                `;
+
+                // Enable test buttons
+                document.getElementById('testSharedBtn').disabled = false;
+                document.getElementById('testSearchBtn').disabled = false;
+                document.getElementById('testFileIdBtn').disabled = false;
+                document.getElementById('testAllBtn').disabled = false;
+
+                document.getElementById('signInBtn').textContent = 'Signed In ✅';
+
+            } catch (error) {
+                console.error('Sign-in failed:', error);
+                document.getElementById('userInfo').innerHTML = `
+                    <div class="status error">❌ Sign-in failed: ${error.message}</div>
+                `;
+                document.getElementById('signInBtn').disabled = false;
+                document.getElementById('signInBtn').textContent = 'Sign In with Microsoft';
+            }
+        }
+
+        async function testSharedItems() {
+            return testMethod('Shared Items API', async () => {
+                const url = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
+                const response = await fetch(url, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const targetFile = data.value?.find(item => 
+                    item.name === fileName && item.file
+                );
+
+                if (!targetFile) {
+                    return {
+                        success: false,
+                        message: `File '${fileName}' not found in shared items`,
+                        details: `Found ${data.value?.length || 0} shared items: ${data.value?.map(item => item.name).join(', ') || 'none'}`
+                    };
+                }
+
+                // Try to access the file content
+                const fileContentUrl = `https://graph.microsoft.com/v1.0/drives/${targetFile.remoteItem.parentReference.driveId}/items/${targetFile.remoteItem.id}/content`;
+                const fileResponse = await fetch(fileContentUrl, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+
+                if (!fileResponse.ok) {
+                    return {
+                        success: false,
+                        message: `Found file but cannot access content: HTTP ${fileResponse.status}`,
+                        details: `File found in shared items but content access failed: ${fileResponse.statusText}`
+                    };
+                }
+
+                return {
+                    success: true,
+                    message: 'File found and accessible via Shared Items API',
+                    details: `File: ${targetFile.name}, Size: ${fileResponse.headers.get('content-length')} bytes, Drive: ${targetFile.remoteItem.parentReference.driveId}`
+                };
+            });
+        }
+
+        async function testSearch() {
+            return testMethod('Search API', async () => {
+                const url = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${fileName}')`;
+                const response = await fetch(url, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const targetFile = data.value?.find(item => 
+                    item.name === fileName && item.file
+                );
+
+                if (!targetFile) {
+                    return {
+                        success: false,
+                        message: `File '${fileName}' not found in user's drive`,
+                        details: `Search returned ${data.value?.length || 0} results: ${data.value?.map(item => item.name).join(', ') || 'none'}`
+                    };
+                }
+
+                // Try to access the file content
+                const fileUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${targetFile.id}/content`;
+                const fileResponse = await fetch(fileUrl, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+
+                if (!fileResponse.ok) {
+                    return {
+                        success: false,
+                        message: `Found file but cannot access content: HTTP ${fileResponse.status}`,
+                        details: `File found in search but content access failed: ${fileResponse.statusText}`
+                    };
+                }
+
+                return {
+                    success: true,
+                    message: 'File found and accessible via Search API',
+                    details: `File: ${targetFile.name}, Size: ${fileResponse.headers.get('content-length')} bytes, ID: ${targetFile.id}`
+                };
+            });
+        }
+
+        async function testFileId() {
+            return testMethod('File ID API', async () => {
+                const url = `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`;
+                const response = await fetch(url, {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        return {
+                            success: false,
+                            message: 'File ID not found in user\'s drive',
+                            details: `This is expected - file ID ${fileId} exists in owner's drive, not in current user's drive`
+                        };
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return {
+                    success: true,
+                    message: 'File accessible via File ID API',
+                    details: `Unexpected success - file ID worked for this user. Size: ${response.headers.get('content-length')} bytes`
+                };
+            });
+        }
+
+        async function testMethod(methodName, testFunction) {
+            const resultsDiv = document.getElementById('results');
+            const testDiv = document.createElement('div');
+            testDiv.innerHTML = `<h4>Testing ${methodName}...</h4>`;
+            resultsDiv.appendChild(testDiv);
+
+            try {
+                const result = await testFunction();
+                testDiv.innerHTML = `
+                    <h4>${methodName}</h4>
+                    <div class="status ${result.success ? 'success' : 'error'}">
+                        ${result.success ? '✅' : '❌'} ${result.message}
+                    </div>
+                    <div class="result">${result.details}</div>
+                `;
+                return result;
+            } catch (error) {
+                testDiv.innerHTML = `
+                    <h4>${methodName}</h4>
+                    <div class="status error">❌ Error: ${error.message}</div>
+                    <div class="error">Stack trace: ${error.stack}</div>
+                `;
+                return { success: false, message: error.message };
+            }
+        }
+
+        async function testAllMethods() {
+            document.getElementById('results').innerHTML = '<h4>Running all tests...</h4>';
+            
+            const results = {
+                sharedItems: await testSharedItems(),
+                search: await testSearch(),
+                fileId: await testFileId()
+            };
+
+            // Generate recommendations
+            const recommendationsDiv = document.getElementById('recommendations');
+            let recommendations = '<h4>🎯 Recommendations:</h4>';
+
+            if (results.sharedItems.success) {
+                recommendations += `
+                    <div class="status success">
+                        ✅ <strong>SOLUTION FOUND:</strong> Use Shared Items API<br>
+                        The file is accessible via shared items. Your updated code should work!
+                    </div>
+                `;
+            } else if (results.search.success) {
+                recommendations += `
+                    <div class="status success">
+                        ✅ <strong>SOLUTION FOUND:</strong> Use Search API<br>
+                        The file is in the user's drive and accessible via search.
+                    </div>
+                `;
+            } else if (results.fileId.success) {
+                recommendations += `
+                    <div class="status warning">
+                        ⚠️ <strong>UNEXPECTED:</strong> File ID worked<br>
+                        This user seems to have the file in their own drive.
+                    </div>
+                `;
+            } else {
+                recommendations += `
+                    <div class="status error">
+                        ❌ <strong>PROBLEM IDENTIFIED:</strong> File not accessible<br>
+                        <strong>Action needed:</strong><br>
+                        1. Ensure the file is properly shared with this user's email<br>
+                        2. Check that sharing permissions are set to "Can view" or "Can edit"<br>
+                        3. Verify the file name is exactly "${fileName}"<br>
+                        4. Try re-sharing the file from OneDrive
+                    </div>
+                `;
+            }
+
+            recommendationsDiv.innerHTML = recommendations;
+        }
+
+        // Auto-initialize if already signed in
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const accounts = msalInstance.getAllAccounts();
+                if (accounts.length > 0) {
+                    const tokenResponse = await msalInstance.acquireTokenSilent({
+                        scopes: ["Files.Read", "Sites.Read.All"],
+                        account: accounts[0]
+                    });
+                    
+                    accessToken = tokenResponse.accessToken;
+                    
+                    const userInfo = document.getElementById('userInfo');
+                    userInfo.innerHTML = `
+                        <div class="status success">
+                            ✅ Already signed in as: ${accounts[0].username}
+                        </div>
+                    `;
+                    
+                    document.getElementById('signInBtn').textContent = 'Signed In ✅';
+                    document.getElementById('signInBtn').disabled = true;
+                    
+                    // Enable test buttons
+                    document.getElementById('testSharedBtn').disabled = false;
+                    document.getElementById('testSearchBtn').disabled = false;
+                    document.getElementById('testFileIdBtn').disabled = false;
+                    document.getElementById('testAllBtn').disabled = false;
+                }
+            } catch (error) {
+                console.log('No existing session found');
+            }
+        });
+    </script>
+</body>
+</html>
