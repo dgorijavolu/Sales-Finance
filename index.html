@@ -307,150 +307,148 @@
     async function loadDataFromOneDrive(accessToken) {
       try {
         // 🎯 CONFIGURATION: Update these values for colleague's file access
-        const COLLEAGUE_EMAIL = "bkoya@evoketechnologies.com"; // Your colleague's email
+        const FILEOWNER_EMAIL = "bkoya@evoketechnologies.com"; // Your colleague's email
         const FILE_NAME = "Final 1.xlsx"; // The file name in colleague's OneDrive
-        const USE_COLLEAGUE_DRIVE = true; // Set to true to access colleague's file
         
-        console.log(`Searching for file: ${FILE_NAME} in shared items`);
+        console.log(`Searching for file: ${FILE_NAME}`);
         
-        /* COMMENTED OUT - Method 1: Direct colleague's drive access (requires User.Read.All permission)
-        if (USE_COLLEAGUE_DRIVE) {
+        // First, let's determine the best approach based on user context
+        let currentUserEmail = null;
+        try {
+          const userInfoResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          if (userInfoResponse.ok) {
+            const userInfo = await userInfoResponse.json();
+            currentUserEmail = userInfo.mail || userInfo.userPrincipalName;
+            console.log("Current user email:", currentUserEmail);
+          }
+        } catch (error) {
+          console.log("Could not get current user info:", error.message);
+        }
+        
+        // Determine if current user is the file owner
+        const isFileOwner = currentUserEmail && currentUserEmail.toLowerCase() === FILEOWNER_EMAIL.toLowerCase();
+        console.log("Is current user the file owner?", isFileOwner);
+        
+        if (isFileOwner) {
+          console.log("Current user is the file owner - searching in their own drive first");
+          
+          // Method 3: Search in current user's drive (for file owner)
           try {
-            console.log(`Accessing ${COLLEAGUE_EMAIL}'s OneDrive...`);
-            
-            // Get colleague's user information
-            const userResponse = await fetch(`https://graph.microsoft.com/v1.0/users/${COLLEAGUE_EMAIL}`, {
+            console.log("Searching in current user's drive");
+            const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${FILE_NAME}')`;
+            const searchResponse = await fetch(searchUrl, {
               headers: { Authorization: `Bearer ${accessToken}` }
             });
             
-            if (userResponse.ok) {
-              const userData = await userResponse.json();
-              const userId = userData.id;
-              console.log(`Found colleague's user ID: ${userId}`);
+            if (searchResponse.ok) {
+              const searchResults = await searchResponse.json();
+              const file = searchResults.value?.find(item => 
+                item.name === FILE_NAME && item.file
+              );
               
-              // Search for file in colleague's drive
-              const searchUrl = `https://graph.microsoft.com/v1.0/users/${userId}/drive/root/search(q='${FILE_NAME}')`;
-              const searchResponse = await fetch(searchUrl, {
-                headers: { Authorization: `Bearer ${accessToken}` }
-              });
-              
-              if (searchResponse.ok) {
-                const searchResults = await searchResponse.json();
-                console.log(`Search results in colleague's drive:`, searchResults.value?.length || 0);
+              if (file) {
+                console.log("Found file in current user's drive:", file.name);
+                const fileUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${file.id}/content`;
+                const fileResponse = await fetch(fileUrl, {
+                  headers: { Authorization: `Bearer ${accessToken}` }
+                });
                 
-                const file = searchResults.value?.find(item => 
-                  item.name === FILE_NAME && item.file
-                );
-                
-                if (file) {
-                  console.log(`Found file in colleague's drive: ${file.name}`);
-                  const fileUrl = `https://graph.microsoft.com/v1.0/users/${userId}/drive/items/${file.id}/content`;
-                  
-                  const fileResponse = await fetch(fileUrl, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                  });
-                  
-                  if (fileResponse.ok) {
-                    const arrayBuffer = await fileResponse.arrayBuffer();
-                    console.log("File fetched successfully from colleague's drive, size:", arrayBuffer.byteLength);
-                    await processFileData(arrayBuffer);
-                    return;
-                  } else {
-                    console.log("Access denied to colleague's file. Trying shared items...");
-                  }
-                } else {
-                  console.log("File not found in colleague's drive. Trying shared items...");
+                if (fileResponse.ok) {
+                  const arrayBuffer = await fileResponse.arrayBuffer();
+                  console.log("File fetched successfully from file owner's drive, size:", arrayBuffer.byteLength);
+                  await processFileData(arrayBuffer);
+                  return;
                 }
               }
-            } else {
-              console.log("Could not access colleague's user info. Trying shared items...");
             }
           } catch (error) {
-            console.log("Colleague's drive access failed:", error.message);
+            console.log("File owner's drive search failed:", error.message);
           }
-        }
-        */
-        
-        // Method 2: Search in shared items - this is the correct approach for shared files
-        try {
-          const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
-          console.log("Fetching shared items from:", sharedItemsUrl);
+        } else {
+          console.log("Current user is NOT the file owner - searching in shared items first");
           
-          const sharedResponse = await fetch(sharedItemsUrl, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
-          
-          if (sharedResponse.ok) {
-            const sharedData = await sharedResponse.json();
-            console.log("Shared items found:", sharedData.value?.length || 0);
-            console.log("All shared items:", sharedData.value?.map(item => item.name));
+          // Method 2: Search in shared items - for users who received the file
+          try {
+            const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
+            console.log("Fetching shared items from:", sharedItemsUrl);
             
-            const targetFile = sharedData.value?.find(item => 
-              item.name === FILE_NAME && item.file
-            );
+            const sharedResponse = await fetch(sharedItemsUrl, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
             
-            if (targetFile) {
-              console.log("Found target file in shared items:", targetFile.name);
-              const fileContentUrl = `https://graph.microsoft.com/v1.0/drives/${targetFile.remoteItem.parentReference.driveId}/items/${targetFile.remoteItem.id}/content`;
+            if (sharedResponse.ok) {
+              const sharedData = await sharedResponse.json();
+              console.log("Shared items found:", sharedData.value?.length || 0);
+              console.log("All shared items:", sharedData.value?.map(item => item.name));
               
-              const fileResponse = await fetch(fileContentUrl, {
-                headers: { Authorization: `Bearer ${accessToken}` }
-              });
+              const targetFile = sharedData.value?.find(item => 
+                item.name === FILE_NAME && item.file
+              );
               
-              if (fileResponse.ok) {
-                const arrayBuffer = await fileResponse.arrayBuffer();
-                console.log("File fetched successfully via shared items, size:", arrayBuffer.byteLength);
-                await processFileData(arrayBuffer);
-                return;
+              if (targetFile) {
+                console.log("Found target file in shared items:", targetFile.name);
+                const fileContentUrl = `https://graph.microsoft.com/v1.0/drives/${targetFile.remoteItem.parentReference.driveId}/items/${targetFile.remoteItem.id}/content`;
+                
+                const fileResponse = await fetch(fileContentUrl, {
+                  headers: { Authorization: `Bearer ${accessToken}` }
+                });
+                
+                if (fileResponse.ok) {
+                  const arrayBuffer = await fileResponse.arrayBuffer();
+                  console.log("File fetched successfully via shared items, size:", arrayBuffer.byteLength);
+                  await processFileData(arrayBuffer);
+                  return;
+                } else {
+                  console.error("Failed to fetch file content:", fileResponse.status, fileResponse.statusText);
+                }
               } else {
-                console.error("Failed to fetch file content:", fileResponse.status, fileResponse.statusText);
+                console.log("File not found in shared items. Available files:", sharedData.value?.map(item => item.name));
               }
             } else {
-              console.log("File not found in shared items. Available files:", sharedData.value?.map(item => item.name));
+              console.error("Failed to fetch shared items:", sharedResponse.status, sharedResponse.statusText);
             }
-          } else {
-            console.error("Failed to fetch shared items:", sharedResponse.status, sharedResponse.statusText);
+          } catch (error) {
+            console.error("Shared items method failed:", error);
           }
-        } catch (error) {
-          console.error("Shared items method failed:", error);
-        }
-        
-        /* COMMENTED OUT - Method 3: Final fallback - Search in current user's drive
-        try {
-          console.log("Trying final fallback: search in current user's drive");
-          const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${FILE_NAME}')`;
-          const searchResponse = await fetch(searchUrl, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
           
-          if (searchResponse.ok) {
-            const searchResults = await searchResponse.json();
-            const file = searchResults.value?.find(item => 
-              item.name === FILE_NAME && item.file
-            );
+          // Fallback: Try searching in current user's drive (maybe they have a copy)
+          try {
+            console.log("Fallback: Trying to search in current user's drive for a copy");
+            const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${FILE_NAME}')`;
+            const searchResponse = await fetch(searchUrl, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
             
-            if (file) {
-              console.log("Found file in current user's drive:", file.name);
-              const fileUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${file.id}/content`;
-              const fileResponse = await fetch(fileUrl, {
-                headers: { Authorization: `Bearer ${accessToken}` }
-              });
+            if (searchResponse.ok) {
+              const searchResults = await searchResponse.json();
+              const file = searchResults.value?.find(item => 
+                item.name === FILE_NAME && item.file
+              );
               
-              if (fileResponse.ok) {
-                const arrayBuffer = await fileResponse.arrayBuffer();
-                console.log("File fetched successfully from current user's drive, size:", arrayBuffer.byteLength);
-                await processFileData(arrayBuffer);
-                return;
+              if (file) {
+                console.log("Found file copy in current user's drive:", file.name);
+                const fileUrl = `https://graph.Microsoft.com/v1.0/me/drive/items/${file.id}/content`;
+                const fileResponse = await fetch(fileUrl, {
+                  headers: { Authorization: `Bearer ${accessToken}` }
+                });
+                
+                if (fileResponse.ok) {
+                  const arrayBuffer = await fileResponse.arrayBuffer();
+                  console.log("File fetched successfully from current user's drive copy, size:", arrayBuffer.byteLength);
+                  await processFileData(arrayBuffer);
+                  return;
+                }
               }
             }
+          } catch (error) {
+            console.log("Current user drive search failed:", error.message);
           }
-        } catch (error) {
-          console.log("Current user drive search failed:", error.message);
         }
-        */
         
         // If all methods fail
-        throw new Error(`File '${FILE_NAME}' not found. Please ensure:\n1. File exists in ${COLLEAGUE_EMAIL}'s OneDrive\n2. File is shared with your account\n3. You have appropriate permissions\n4. File name is correct`);
+        throw new Error(`File '${FILE_NAME}' not found. Please ensure:\n1. File exists in ${FILEOWNER_EMAIL}'s OneDrive\n2. File is shared with your account\n3. You have appropriate permissions\n4. File name is correct`);
         
       } catch (error) {
         console.error("Error loading data:", error);
