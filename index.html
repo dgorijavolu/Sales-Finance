@@ -1,955 +1,634 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Financial Dashboard</title>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-
-  <!-- SheetJS (for Excel parsing) -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
-
-  <!--  MSAL.js for authentication Microsoft Graph API -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>   
-  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Dashboard - Evoke Technologies</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    /* THEME: Forest & Amber (Dark Mode) */
-    body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #1A2226;
-      color: #D1D5DB;
-    }
-
-    .filter-bar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #FFFFFF;
+      min-height: 100vh;
       display: flex;
-      gap: 10px;
-      padding: 20px;
-      background-color: #263138;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      align-items: center;
-      border-bottom: 1px solid #4B5563;
     }
 
-    .filter-group {
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+      border-right: 3px solid #3498db;
       display: flex;
-      gap: 10px;
-      align-items: center;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      left: 0;
+      top: 0;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      box-shadow: 4px 0 20px rgba(52, 152, 219, 0.3);
     }
 
-    select {
-      background-color: #374151;
-      color: #E5E7EB;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid #4B5563;
-      cursor: pointer;
-      min-width: 120px;
+    .sidebar.collapsed {
+      width: 75px;
     }
 
-    .upload-btn {
-      background-color: #F59E0B;
-      color: #1F2937;
-      font-weight: bold;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .upload-btn:hover {
-      background-color: #D97706;
-    }
-
-    input[type="file"] {
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .brand-text {
       display: none;
     }
 
-    .dashboard {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      padding: 20px;
+    .sidebar.collapsed .brand-logo {
+      width: 100%;
+      height: 55px;
+      margin: 0;
+      padding: 5px;
+      max-width: none;
     }
 
-    .card {
-      background-color: #263138;
-      border-radius: 12px;
-      padding: 20px;
-      min-height: 600px;
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+      border-radius: 0;
+    }
+
+    /* Brand Section */
+    .brand {
+      padding: 0;
+      border-bottom: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      margin: 0;
+      height: 70px;
+    }
+
+    .brand-logo {
+      width: 100%;
+      height: 50px;
+      object-fit: contain;
+      margin: 0;
+      padding: 10px;
+      max-width: 200px;
+    }
+
+    .brand-text {
+      font-size: 18px;
+      font-weight: bold;
+      color: #FFFFFF;
+      line-height: 1.2;
+    }
+
+    /* Navigation Menu */
+    .nav-menu {
+      flex: 1;
+      padding: 25px 0;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 16px 25px;
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      gap: 15px;
+      border-left: 4px solid transparent;
+      margin: 2px 0;
+      border-radius: 0 25px 25px 0;
+      position: relative;
+    }
+
+    .nav-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(52, 152, 219, 0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 0 25px 25px 0;
+    }
+
+    .nav-item:hover::before {
+      opacity: 1;
+    }
+
+    .nav-item:hover {
+      background: rgba(52, 152, 219, 0.15);
+      color: #3498db;
+      border-left-color: #3498db;
+      transform: translateX(5px);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(90deg, rgba(52, 152, 219, 0.2) 0%, rgba(52, 152, 219, 0.1) 100%);
+      color: #3498db;
+      border-left-color: #3498db;
+      font-weight: 600;
+      box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
+    }
+
+    .nav-icon {
+      width: 22px;
+      text-align: center;
+      font-size: 18px;
+      color: #74b9ff;
+      transition: color 0.3s ease;
+    }
+
+    .nav-item:hover .nav-icon {
+      color: #3498db;
+    }
+
+    .nav-item.active .nav-icon {
+      color: #3498db;
+    }
+
+    .nav-text {
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    /* Expandable Menu Items */
+    .nav-item.expandable {
+      position: relative;
+    }
+
+    .nav-item.expandable .expand-arrow {
+      margin-left: auto;
+      font-size: 12px;
+      transition: transform 0.3s ease;
+    }
+
+    .nav-item.expandable.expanded .expand-arrow {
+      transform: rotate(90deg);
+    }
+
+    /* Submenu Styles */
+    .nav-submenu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: linear-gradient(180deg, rgba(52, 152, 219, 0.1) 0%, rgba(44, 62, 80, 0.3) 100%);
+      border-left: 3px solid #3498db;
+      margin-left: 20px;
+      border-radius: 0 15px 15px 0;
+    }
+
+    .nav-submenu.expanded {
+      max-height: 250px;
+    }
+
+    .nav-subitem {
+      display: flex;
+      align-items: center;
+      padding: 14px 25px 14px 30px;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      gap: 12px;
+      border-left: 3px solid transparent;
+      font-size: 14px;
+      position: relative;
+    }
+
+    .nav-subitem::before {
+      content: '→';
+      position: absolute;
+      left: 10px;
+      color: #74b9ff;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .nav-subitem:hover {
+      background: rgba(52, 152, 219, 0.2);
+      color: #3498db;
+      border-left-color: #3498db;
+      transform: translateX(3px);
+    }
+
+    .nav-subitem.active {
+      background: linear-gradient(90deg, rgba(52, 152, 219, 0.25) 0%, rgba(52, 152, 219, 0.1) 100%);
+      color: #3498db;
+      border-left-color: #3498db;
+      font-weight: 600;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      margin-left: 260px;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      border: 1px solid #4B5563;
-      overflow: hidden;
+      min-height: 100vh;
+      transition: margin-left 0.3s ease;
+      background: rgba(255, 255, 255, 0.05);
     }
 
-    .card h2 {
-      font-size: 20px;
-      margin-bottom: 10px;
-      color: #F9FAFB;
+    .main-content.expanded {
+      margin-left: 75px;
     }
 
-    .card h3 {
-      font-size: 32px;
-      margin-bottom: 5px;
-      color: #F59E0B;
+    /* Header */
+    .header {
+      background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%);
+      backdrop-filter: blur(15px);
+      border-bottom: 3px solid #3498db;
+      padding: 0 35px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 15px rgba(52, 152, 219, 0.2);
     }
 
-    #totalSalesYear, #totalSalesMonth, #outstandingTotal, #totalCharges, #activeClientsPeriod {
-        cursor: pointer;
-        transition: color 0.2s ease-in-out, text-decoration 0.2s ease-in-out;
-    }
-    #totalSalesYear:hover, #totalSalesMonth:hover, #outstandingTotal:hover, #totalCharges:hover, #activeClientsPeriod:hover {
-        color: #FBBF24;
-        text-decoration: underline;
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
     }
 
-    .subheader {
-      font-size: 14px;
-      color: #9CA3AF;
-      margin-bottom: 5px;
+    .menu-toggle {
+      background: linear-gradient(135deg, #3498db, #74b9ff);
+      border: none;
+      color: #FFFFFF;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 10px 12px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
     }
 
-    .highlight {
-      color: #34D399 !important;
-      font-size: 13px;
+    .menu-toggle:hover {
+      background: linear-gradient(135deg, #74b9ff, #3498db);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
     }
 
-    .down {
-      color: #F87171 !important;
-      font-size: 13px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      margin-top: 10px;
-      table-layout: fixed;
-    }
-    
-    td {
-      padding: 6px 8px;
-      border-bottom: 1px solid #4B5563;
-      color: #D1D5DB;
-      text-align: left;
-      white-space: normal;
-      word-break: break-word;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    th {
-      padding: 6px 8px;
-      border-bottom: 2px solid #4B5563;
-      color: #E5E7EB;
+    .page-title {
+      font-size: 24px;
       font-weight: 600;
-      text-align: left;
-      background-color: #374151;
+      color: #FFFFFF;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.5px;
     }
 
-    .card table th:first-child, .card table td:first-child { text-align: left; width: 50%; }
-    .card table th:nth-child(2), .card table td:nth-child(2) { text-align: right; width: 50%; }
-    .card table th:nth-child(3), .card table td:nth-child(3) { text-align: right; width: 30%; }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
 
-    canvas { margin-top: 10px; max-height: 200px; }
+    /* Content Frame */
+    .content-frame {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: transparent;
+    }
 
-    @media (max-width: 1200px) { .dashboard { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } .card { min-height: auto; } .filter-bar { flex-direction: column; align-items: stretch; } .filter-group { margin-bottom: 10px; width: 100%; justify-content: space-between; } .filter-group label { display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px; } select { width: 50%; } .upload-btn { margin-top: 10px; width: 100%; text-align: center; } }
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
 
-    .popup-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
-    .popup-content { background-color: #263138; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); width: 90%; max-width: 950px; max-height: 90vh; display: flex; flex-direction: column; color: #D1D5DB; }
-    .popup-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4B5563; padding-bottom: 10px; margin-bottom: 15px; }
-    .popup-header h4 { margin: 0; font-size: 18px; color: #F9FAFB; }
-    .popup-summary { font-size: 14px; color: #9CA3AF; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed #4B5563; }
-    .popup-close-btn { background: none; border: none; font-size: 24px; font-weight: bold; color: #9CA3AF; cursor: pointer; padding: 0 5px; line-height: 1; }
-    .popup-close-btn:hover { color: #E5E7EB; }
-    .popup-body { overflow-y: auto; flex-grow: 1; min-height: 100px; }
-    .popup-body table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 0; table-layout: fixed; }
-    .popup-body thead th { background-color: #374151 !important; color: #F9FAFB; font-weight: 600; position: sticky; top: 0; z-index: 1; border-bottom: 2px solid #4B5563; }
-    .popup-body td.numeric, .popup-body th.numeric { text-align: right; }
+      .sidebar.show {
+        transform: translateX(0);
+      }
 
-    #invoiceChartDetailsTableBody th:nth-child(1), #invoiceChartDetailsTableBody td:nth-child(1) { width: 15%; } #invoiceChartDetailsTableBody th:nth-child(2), #invoiceChartDetailsTableBody td:nth-child(2) { width: 35%; } #invoiceChartDetailsTableBody th:nth-child(3), #invoiceChartDetailsTableBody td:nth-child(3) { width: 15%; } #invoiceChartDetailsTableBody th:nth-child(4), #invoiceChartDetailsTableBody td:nth-child(4) { width: 15%; text-align: right;} #invoiceChartDetailsTableBody th:nth-child(5), #invoiceChartDetailsTableBody td:nth-child(5) { width: 10%; } #invoiceChartDetailsTableBody th:nth-child(6), #invoiceChartDetailsTableBody td:nth-child(6) { width: 10%; }
-    #fySalesClientTableBody th:first-child, #fySalesClientTableBody td:first-child, #monthSalesClientTableBody th:first-child, #monthSalesClientTableBody td:first-child { width: 60%; } #fySalesClientTableBody th:nth-child(2), #fySalesClientTableBody td:nth-child(2), #monthSalesClientTableBody th:nth-child(2), #monthSalesClientTableBody td:nth-child(2) { width: 40%; text-align: right; }
-    #chargesDetailsTableBody th:nth-child(1), #chargesDetailsTableBody td:nth-child(1) { width: 50%; } #chargesDetailsTableBody th:nth-child(2), #chargesDetailsTableBody td:nth-child(2) { width: 25%; } #chargesDetailsTableBody th:nth-child(3), #chargesDetailsTableBody td:nth-child(3) { width: 25%; text-align: right; }
-    .no-data-message { text-align: center; padding: 20px; color: #9CA3AF; font-style: italic; }
+      .main-content {
+        margin-left: 0;
+      }
+
+      .main-content.expanded {
+        margin-left: 0;
+      }
+
+      .header {
+        padding: 0 15px;
+      }
+    }
+
+    /* Loading Animation */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .loading::after {
+      content: '';
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 12px;
+      box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
-
 <body>
-  <!-- Filter Slicers -->
-  <div class="filter-bar">
-    <div class="filter-group">
-      <label> Financial Year: <select id="year"><option value="">All Years</option></select> </label>
-      <label> Month: <select id="month"><option value="">All Months</option><option value="3">Apr</option><option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option><option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option></select></label>
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="brand">
+      <img src="Logo.png" alt="Evoke Technologies" class="brand-logo">
+      <!-- <span class="brand-text">Evoke Technologies</span> -->
     </div>
-    <div><button onclick="signIn()" class="upload-btn">Sign In</button></div>
-    <!-- <div> <label for="file-upload" class="upload-btn">Upload Excel</label> <input type="file" id="file-upload" accept=".xlsx,.xls" /> </div> -->
+    
+    <div class="nav-menu">
+      <div class="nav-item active" data-page="Export sales" onclick="loadPage('finance-dashboard')">
+        <i class="fas fa-chart-pie nav-icon"></i>
+        <span class="nav-text">Export Sales</span>
+      </div>
+      <div class="nav-item" data-page="P&L" onclick="loadPage('PandL')">
+        <i class="fas fa-chart-line nav-icon"></i>
+        <span class="nav-text">P&L</span>
+      </div>
+      <div class="nav-item" data-page="IRM" onclick="loadPage('IRM')">
+        <i class="fas fa-shield-alt nav-icon"></i>
+        <span class="nav-text">IRM</span>
+      </div>
+      
+      <!-- Expandable Outward Remittance Menu -->
+      <div class="nav-item expandable" data-page="outward-remittance" onclick="toggleSubmenu(this)">
+        <i class="fas fa-paper-plane nav-icon"></i>
+        <span class="nav-text">Outward Remittance</span>
+        <i class="fas fa-chevron-right expand-arrow"></i>
+      </div>
+      <div class="nav-submenu" id="outward-remittance-submenu">
+        <div class="nav-subitem" data-page="branch" onclick="loadPage('branch')">
+          <i class="fas fa-building nav-icon"></i>
+          <span class="nav-text">Branch</span>
+        </div>
+        <div class="nav-subitem" data-page="subsidiaries" onclick="loadPage('subsidiaries')">
+          <i class="fas fa-network-wired nav-icon"></i>
+          <span class="nav-text">Subsidiaries</span>
+        </div>
+      </div>
+      
+      <!-- Expandable Share Holding Menu -->
+      <div class="nav-item expandable" data-page="share-holding" onclick="toggleSubmenu(this)">
+        <i class="fas fa-coins nav-icon"></i>
+        <span class="nav-text">Share Holding</span>
+        <i class="fas fa-chevron-right expand-arrow"></i>
+      </div>
+      <div class="nav-submenu" id="share-holding-submenu">
+        <div class="nav-subitem" data-page="evoke-technologies" onclick="loadPage('evoke-technologies')">
+          <i class="fas fa-building nav-icon"></i>
+          <span class="nav-text">Evoke Technologies</span>
+        </div>
+        <div class="nav-subitem" data-page="write-off" onclick="loadPage('write-off')">
+          <i class="fas fa-minus-circle nav-icon"></i>
+          <span class="nav-text">Write-Off</span>
+        </div>
+      </div>
+      
+      <div class="nav-item" data-page="imports" onclick="loadPage('imports')">
+        <i class="fas fa-ship nav-icon"></i>
+        <span class="nav-text">Imports</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content" id="mainContent">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-toggle" id="menuToggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="page-title" id="pageTitle">Finance Dashboard</h1>
+      </div>
+      
+      <div class="header-actions">
+        <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">
+          <i class="fas fa-user"></i>
+          <span style="margin-left: 5px;">Dashboard Portal</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <main style="flex: 1; display: flex; flex-direction: column;">
+      <div id="loadingIndicator" class="loading" style="display: none;">
+        Loading Finance Dashboard...
+      </div>
+      <iframe 
+        id="contentFrame" 
+        class="content-frame" 
+        src="dashboard.html"
+        onload="handleFrameLoad()"
+        style="display: block;">
+      </iframe>
+    </main>
   </div>
-
-  <!-- Dashboard -->
-  <div class="dashboard">
-    <div class="card">
-      <h2>Sales (Financial Year)</h2><div class="subheader">This Fin. Year</div><h3 id="totalSalesYear">$0</h3><p id="salesVsLastYear" class="highlight">▲ $0 vs last FY</p>
-      <div class="subheader">Selected Month</div><h3 id="totalSalesMonth">$0</h3><p id="salesVsLastMonth" class="down">▼ $0 vs last month</p>
-      <h2>Sales by Customer (Period)</h2><table><thead><tr><th>Customer</th><th class="numeric">Amount</th></tr></thead><tbody id="salesByCustomerTable"></tbody></table>
-    </div>
-    <div class="card">
-      <h2>Cash Flow (Period)</h2><h3 id="cashFlowTotalPeriod">$0</h3><table><thead><tr><th>Customer</th><th class="numeric">Received</th></tr></thead><tbody id="cashFlowCustomerTable"></tbody></table>
-      <h2>Total Outstanding (Period)</h2><h3 id="outstandingTotal">$0</h3><p id="avgAgeing" class="highlight">Avg Age: 0 days</p>
-      <h2>Softex vs BRC (Period)</h2><canvas id="invoiceChart"></canvas>
-    </div>
-    <div class="card">
-      <h2>Active Clients (Period)</h2><h3 id="activeClientsPeriod">0</h3><h2>Total vs Active Clients (Historical vs Period)</h2><canvas id="activeClientsChart"></canvas>
-      <h2>Top 5 Revenue Contributors </h2><table><thead><tr><th>Account</th><th class="numeric">Revenue</th><th class="numeric">% Contrib</th></tr></thead><tbody id="topRevenueTable"></tbody></table>
-    </div>
-    <div class="card">
-      <h2>Total Charges (Period)</h2><h3 id="totalCharges">$0</h3><h2>Sales by Subsidiaries (Period)</h2><canvas id="subsidiariesChart"></canvas>
-      <h2>Outstanding by Client </h2>
-      <table><thead><tr><th>Account</th><th class="numeric">Total Due ($)</th></tr></thead><tbody id="outstandingByClientTable"></tbody></table>
-    </div>
-  </div>
-
-  <!-- Popup Modals -->
-  <div id="fySalesClientPopup" class="popup-container"><div class="popup-content"><div class="popup-header"><h4 id="fySalesPopupTitle">Client-wise Sales (Financial Year)</h4><button class="popup-close-btn">&times;</button></div><div class="popup-summary"></div><div class="popup-body"><table><thead><tr><th>Customer</th><th class="numeric">Total Sales</th></tr></thead><tbody id="fySalesClientTableBody"></tbody></table></div></div></div>
-  <div id="monthSalesClientPopup" class="popup-container"><div class="popup-content"><div class="popup-header"><h4 id="monthSalesPopupTitle">Client-wise Sales (Month)</h4><button class="popup-close-btn">&times;</button></div><div class="popup-summary"></div><div class="popup-body"><table><thead><tr><th>Customer</th><th class="numeric">Total Sales</th></tr></thead><tbody id="monthSalesClientTableBody"></tbody></table></div></div></div>
-  <div id="periodOutstandingPopup" class="popup-container"><div class="popup-content"><div class="popup-header"><h4 id="periodOutstandingPopupTitle">Outstanding Invoice Details (Period)</h4><button class="popup-close-btn">&times;</button></div><div class="popup-summary"></div><div id="periodOutstandingTableContainer" class="popup-body"></div></div></div>
-  <div id="chargesDetailsPopup" class="popup-container"><div class="popup-content"><div class="popup-header"><h4 id="chargesDetailsPopupTitle">Charges Details (Period)</h4><button class="popup-close-btn">&times;</button></div><div class="popup-summary"></div><div class="popup-body"><table><thead><tr><th>Customer</th><th>Inv. Date</th><th class="numeric">Charge Amount</th></tr></thead><tbody id="chargesDetailsTableBody"></tbody></table></div></div></div>
-  <div id="invoiceChartDetailsPopup" class="popup-container"><div class="popup-content"><div class="popup-header"><h4 id="invoiceChartDetailsPopupTitle">Details (Period)</h4><button class="popup-close-btn">&times;</button></div><div class="popup-summary"></div><div class="popup-body"><table><thead><tr><th>Inv. No</th><th>Customer</th><th>Inv. Date</th><th class="numeric">Inv. Value</th><th>Softex No</th><th>BRC No</th></tr></thead><tbody id="invoiceChartDetailsTableBody"></tbody></table></div></div></div>
-  <div id="activeClientsPopup" class="popup-container"><div class="popup-content"><div class="popup-header"><h4 id="activeClientsPopupTitle">Active Clients (Period)</h4><button class="popup-close-btn">&times;</button></div><div class="popup-summary"></div><div class="popup-body"><table><thead><tr><th>Client Name</th></tr></thead><tbody id="activeClientsTableBody"></tbody></table></div></div></div>
-
 
   <script>
-  // Button text constants
-  const BUTTON_TEXT = {
-    SIGN_IN: "Sign In",
-    REFRESH: "Refresh Data"
-  };
-
-  // Function to update sign-in button text
-  function updateSignInButtonText(text) {
-    const signInButton = document.querySelector('button[onclick="signIn()"]');
-    if (signInButton) {
-      signInButton.textContent = text;
-    }
-  }
-
-  //Using Microsoft Graph API to read Excel files from OneDrive requires authentication
-    const msalConfig = {
-      auth: {
-        clientId: "57343fc8-1f4e-40ab-87f4-3f86782b469a", 
-        authority: "https://login.microsoftonline.com/e1c5d9ee-a951-451e-8432-642c23d40071", 
-        redirectUri: window.location.origin + window.location.pathname // Use current page URL
-      },
-      cache: {
-        cacheLocation: "localStorage", // Enable localStorage for better token management
-        storeAuthStateInCookie: false
-      }
-    };
-    
-    console.log("MSAL Config redirect URI:", msalConfig.auth.redirectUri); // Debug log
-    
-    const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-    async function signIn() {
-      try {
-        console.log("Starting sign-in process..."); // Debug log
-        document.body.style.cursor = 'wait';
+    // Submenu toggle functionality
+    function toggleSubmenu(element) {
+      const submenuId = element.getAttribute('data-page') + '-submenu';
+      const submenu = document.getElementById(submenuId);
+      const arrow = element.querySelector('.expand-arrow');
+      
+      if (submenu) {
+        // Toggle submenu visibility
+        submenu.classList.toggle('expanded');
+        element.classList.toggle('expanded');
         
-        console.log("MSAL Config:", msalConfig); // Debug log
-        
-        const loginResponse = await msalInstance.loginPopup({
-          scopes: ["Files.Read", "Sites.Read.All"],
-          prompt: "select_account" // Force account selection
-        });
-        
-        console.log("Login successful:", loginResponse); // Debug log
-
-        const tokenResponse = await msalInstance.acquireTokenSilent({
-          scopes: ["Files.Read", "Sites.Read.All"],
-          account: loginResponse.account
-        });
-        
-        console.log("Token acquired:", tokenResponse.accessToken ? "Yes" : "No"); // Debug log
-
-        const accessToken = tokenResponse.accessToken;
-
-        // Call the function to load data from OneDrive
-        await loadDataFromOneDrive(accessToken);
-        
-        // Update button text to show refresh option
-        updateSignInButtonText(BUTTON_TEXT.REFRESH);
-        
-      } catch (error) {
-        console.error("Error during sign-in:", error);
-        
-        // More detailed error logging
-        if (error.errorCode) {
-          console.error("Error code:", error.errorCode);
-          console.error("Error message:", error.errorMessage);
-        }
-        
-        alert(`Error during sign-in: ${error.message || error.errorMessage || error}`);
-      } finally {
-        document.body.style.cursor = 'default';
+        // Prevent the default loadPage behavior for expandable items
+        event.stopPropagation();
       }
     }
 
-    async function loadDataFromOneDrive(accessToken) {
-      try {
-        // 🎯 CONFIGURATION: Update these values for colleague's file access
-        const FILEOWNER_EMAIL = "bkoya@evoketechnologies.com"; // Your colleague's email
-        const FILE_NAME = "Final 1.xlsx"; // The file name in colleague's OneDrive
-        
-        console.log(`Searching for file: ${FILE_NAME}`);
-        
-        // First, let's determine the best approach based on user context
-        let currentUserEmail = null;
-        try {
-          const userInfoResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
-          if (userInfoResponse.ok) {
-            const userInfo = await userInfoResponse.json();
-            currentUserEmail = userInfo.mail || userInfo.userPrincipalName;
-            console.log("Current user email:", currentUserEmail);
-          }
-        } catch (error) {
-          console.log("Could not get current user info:", error.message);
-        }
-        
-        // Determine if current user is the file owner
-        const isFileOwner = currentUserEmail && currentUserEmail.toLowerCase() === FILEOWNER_EMAIL.toLowerCase();
-        console.log("Is current user the file owner?", isFileOwner);
-        
-        if (isFileOwner) {
-          console.log("Current user is the file owner - searching in their own drive first");
-          
-          // Method 3: Search in current user's drive (for file owner)
-          try {
-            console.log("Searching in current user's drive");
-            const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${FILE_NAME}')`;
-            const searchResponse = await fetch(searchUrl, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            
-            if (searchResponse.ok) {
-              const searchResults = await searchResponse.json();
-              const file = searchResults.value?.find(item => 
-                item.name === FILE_NAME && item.file
-              );
-              
-              if (file) {
-                console.log("Found file in current user's drive:", file.name);
-                const fileUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${file.id}/content`;
-                const fileResponse = await fetch(fileUrl, {
-                  headers: { Authorization: `Bearer ${accessToken}` }
-                });
-                
-                if (fileResponse.ok) {
-                  const arrayBuffer = await fileResponse.arrayBuffer();
-                  console.log("File fetched successfully from file owner's drive, size:", arrayBuffer.byteLength);
-                  await processFileData(arrayBuffer);
-                  return;
-                }
-              }
-            }
-          } catch (error) {
-            console.log("File owner's drive search failed:", error.message);
-          }
+    // Navigation functionality
+    function initializeNavigation() {
+      const menuToggle = document.getElementById('menuToggle');
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      const navItems = document.querySelectorAll('.nav-item:not(.expandable)');
+      const navSubitems = document.querySelectorAll('.nav-subitem');
+      const pageTitle = document.getElementById('pageTitle');
+
+      // Mobile menu toggle
+      menuToggle.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          sidebar.classList.toggle('show');
         } else {
-          console.log("Current user is NOT the file owner - searching in shared items first");
+          sidebar.classList.toggle('collapsed');
+          mainContent.classList.toggle('expanded');
+        }
+      });
+
+      // Navigation item clicks (excluding expandable items)
+      navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
           
-          // Method 2: Search in shared items - for users who received the file
-          try {
-            const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
-            console.log("Fetching shared items from:", sharedItemsUrl);
-            
-            const sharedResponse = await fetch(sharedItemsUrl, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            
-            if (sharedResponse.ok) {
-              const sharedData = await sharedResponse.json();
-              console.log("Shared items found:", sharedData.value?.length || 0);
-              console.log("All shared items:", sharedData.value?.map(item => item.name));
-              
-              const targetFile = sharedData.value?.find(item => 
-                item.name === FILE_NAME && item.file
-              );
-              
-              if (targetFile) {
-                console.log("Found target file in shared items:", targetFile.name);
-                const fileContentUrl = `https://graph.microsoft.com/v1.0/drives/${targetFile.remoteItem.parentReference.driveId}/items/${targetFile.remoteItem.id}/content`;
-                
-                const fileResponse = await fetch(fileContentUrl, {
-                  headers: { Authorization: `Bearer ${accessToken}` }
-                });
-                
-                if (fileResponse.ok) {
-                  const arrayBuffer = await fileResponse.arrayBuffer();
-                  console.log("File fetched successfully via shared items, size:", arrayBuffer.byteLength);
-                  await processFileData(arrayBuffer);
-                  return;
-                } else {
-                  console.error("Failed to fetch file content:", fileResponse.status, fileResponse.statusText);
-                }
-              } else {
-                console.log("File not found in shared items. Available files:", sharedData.value?.map(item => item.name));
-              }
-            } else {
-              console.error("Failed to fetch shared items:", sharedResponse.status, sharedResponse.statusText);
-            }
-          } catch (error) {
-            console.error("Shared items method failed:", error);
-          }
+          const targetPage = item.getAttribute('data-page');
           
-          // Fallback: Try searching in current user's drive (maybe they have a copy)
-          try {
-            console.log("Fallback: Trying to search in current user's drive for a copy");
-            const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${FILE_NAME}')`;
-            const searchResponse = await fetch(searchUrl, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            
-            if (searchResponse.ok) {
-              const searchResults = await searchResponse.json();
-              const file = searchResults.value?.find(item => 
-                item.name === FILE_NAME && item.file
-              );
-              
-              if (file) {
-                console.log("Found file copy in current user's drive:", file.name);
-                const fileUrl = `https://graph.Microsoft.com/v1.0/me/drive/items/${file.id}/content`;
-                const fileResponse = await fetch(fileUrl, {
-                  headers: { Authorization: `Bearer ${accessToken}` }
-                });
-                
-                if (fileResponse.ok) {
-                  const arrayBuffer = await fileResponse.arrayBuffer();
-                  console.log("File fetched successfully from current user's drive copy, size:", arrayBuffer.byteLength);
-                  await processFileData(arrayBuffer);
-                  return;
-                }
-              }
-            }
-          } catch (error) {
-            console.log("Current user drive search failed:", error.message);
+          // Update active nav item
+          navItems.forEach(nav => nav.classList.remove('active'));
+          navSubitems.forEach(nav => nav.classList.remove('active'));
+          item.classList.add('active');
+          
+          // Update page title
+          updatePageTitle(targetPage);
+          
+          // Hide sidebar on mobile after navigation
+          if (window.innerWidth <= 768) {
+            sidebar.classList.remove('show');
           }
-        }
-        
-        // If all methods fail
-        throw new Error(`File '${FILE_NAME}' not found. Please ensure:\n1. File exists in ${FILEOWNER_EMAIL}'s OneDrive\n2. File is shared with your account\n3. You have appropriate permissions\n4. File name is correct`);
-        
-      } catch (error) {
-        console.error("Error loading data:", error);
-        alert(`Error loading data: ${error.message}`);
-      }
-    }
-    
-    // Helper function to process file data
-    async function processFileData(arrayBuffer) {
-      try {
-        // Use SheetJS to parse Excel - same as handleFileUpload
-        const workbook = XLSX.read(arrayBuffer, { type: "array", cellDates: false });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true, defval: '' });
-
-        // Process the data using the same logic as handleFileUpload
-        console.log("Raw Excel data first row:", jsonData[0]); // Debug log
-        processExcelData(jsonData);
-        
-      } catch (error) {
-        console.error("Error processing file data:", error);
-        throw error;
-      }
-    }
-
-    //End Microsoft Graph API authentication code
-
-    // Function to check if user is already signed in and load data automatically
-    async function initializeApp() {
-        try {
-            const accounts = msalInstance.getAllAccounts();
-            if (accounts.length > 0) {
-                // User is already signed in, try to get token silently
-                try {
-                    const tokenResponse = await msalInstance.acquireTokenSilent({
-                        scopes: ["Files.Read", "Sites.Read.All"],
-                        account: accounts[0]
-                    });
-                    
-                    // Load data automatically
-                    await loadDataFromOneDrive(tokenResponse.accessToken);
-                    
-                    // Update sign-in button text
-                    updateSignInButtonText(BUTTON_TEXT.REFRESH);
-                    
-                } catch (error) {
-                    console.log("Silent token acquisition failed, user needs to sign in again");
-                }
-            }
-        } catch (error) {
-            console.error("Error during app initialization:", error);
-        }
-    }
-
-    let allFinancialData = [];
-    let financialYears = new Set();
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    let invoiceChart, activeClientsChart, subsidiariesChart;
-    let currentPeriodFilteredData = [];
-    let currentMetrics = {};
-
-    let activeClientsPopupElement, activeClientsPopupSummaryElement;
-    let fySalesClientPopupElement, monthSalesClientPopupElement, periodOutstandingPopupElement, chargesDetailsPopupElement, invoiceChartDetailsPopupElement;
-    let periodOutstandingPopupTitleElement, periodOutstandingPopupSummaryElement, periodOutstandingTableContainerElement;
-
-    const EXPECTED_COLUMNS = {
-      DATE: 'Invoice Date', INVOICE_NO: 'Invoice No', INVOICE_VALUE: 'Invoice Value',
-      RECEIVED_VALUE: 'Rcvd Value', CHARGES: 'Charges', CUSTOMER: 'Client Name',
-      STATUS: 'Status', SOFTEX: 'Softex No', BRC: 'BRC No', DUE_DATE: 'Due Date',
-      SUBSIDIARY: 'Subsidiary', RECEIVED_DATE: 'Received Date',
-      DUE_IN_USD: 'Due in $',
-      DUE_PERIOD: 'Due'
-    };
-
-    function getFinancialYear(date) { if (!(date instanceof Date) || isNaN(date)) return null; const year = date.getFullYear(); const month = date.getMonth(); return month < 3 ? year - 1 : year; }
-    function initializeCharts() { const chartTextColor='#9CA3AF';const chartGridColor='#4B5563';const invoiceCtx=document.getElementById('invoiceChart')?.getContext('2d');const activeCtx=document.getElementById('activeClientsChart')?.getContext('2d');const subsCtx=document.getElementById('subsidiariesChart')?.getContext('2d');if(invoiceChart)invoiceChart.destroy();if(activeClientsChart)activeClientsChart.destroy();if(subsidiariesChart)subsidiariesChart.destroy();const commonChartOptions={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{color:chartTextColor},grid:{color:chartGridColor,borderColor:chartGridColor}},x:{ticks:{color:chartTextColor},grid:{color:chartGridColor,borderColor:chartGridColor}}}};if(invoiceCtx){invoiceChart=new Chart(invoiceCtx,{type:'bar',data:{labels:['Invoices','Softex','BRC'],datasets:[{label:'Count',data:[0,0,0],backgroundColor:['#4FD1C5','#63B3ED','#F6E05E']}]},options:{...commonChartOptions,onClick:(event,elements)=>{if(elements.length>0){const clickedIndex=elements[0].index;const label=invoiceChart.data.labels[clickedIndex];handleInvoiceChartBarClick(label);}}}});} if(activeCtx){let activeChartOptions=JSON.parse(JSON.stringify(commonChartOptions));activeChartOptions.indexAxis='y';activeChartOptions.scales.x.ticks.stepSize=1;activeClientsChart=new Chart(activeCtx,{type:'bar',data:{labels:['Total Clients (Historical)','Active Clients (Period)'],datasets:[{label:'Client Count',data:[0,0],backgroundColor:['#63B3ED','#4FD1C5'],borderColor:['#63B3ED','#4FD1C5'],borderWidth:1}]},options:activeChartOptions});} if(subsCtx){subsidiariesChart=new Chart(subsCtx,{type:'doughnut',data:{labels:[],datasets:[{label:'Subsidiary Sales',data:[],backgroundColor:['#4FD1C5', '#63B3ED', '#F6E05E', '#F56565', '#B794F4', '#ED8936'],borderColor:'#263138',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:chartTextColor}}}}});}}
-    function formatCurrency(value, digits = 0) { const num = Number(value); if (isNaN(num)) return '$0'; const absValue = Math.abs(num); if (absValue >= 1000000) { return (num < 0 ? '-' : '') + '$' + (absValue / 1000000).toFixed(1) + 'M'; } else if (absValue >= 1000) { return (num < 0 ? '-' : '') + '$' + (absValue / 1000).toFixed(0) + 'K'; } return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits }).format(num);	}
-    function formatPercentage(current, previous) { if (previous === 0 || previous == null || isNaN(previous)) { return current > 0 ? "+100%" : (current < 0 ? "-100%" : "0%"); } if (current == null || isNaN(current)) current = 0; const percentageChange = ((current - previous) / previous) * 100; const sign = percentageChange > 0 ? '+' : (percentageChange < 0 ? '' : ''); return `${sign}${percentageChange.toFixed(1)}%`; }
-    function cleanCurrency(value) { if (typeof value === 'number') return value; if (value === null || value === undefined) return 0; let stringValue = String(value).trim(); if (stringValue === '' || stringValue === '-') return 0; const cleaned = stringValue.replace(/[$,\s\u00A0]/g, ''); const num = parseFloat(cleaned); if (isNaN(num)) { return 0; } return num;    }
-    
-    // Simplified updateTable function, no longer handles special cases
-    function updateTable(tableBodyId, dataRows, columnConfigs = [], noDataMessage = 'No data available for this selection.') {
-        const tbody = document.getElementById(tableBodyId);
-        if (!tbody) { console.warn(`Table body with ID '${tableBodyId}' not found.`); return; }
-        tbody.innerHTML = '';
-        if (dataRows && dataRows.length > 0) {
-            dataRows.forEach(rowData => {
-                const tr = document.createElement('tr');
-                const cells = Array.isArray(rowData) ? rowData : Object.values(rowData);
-                cells.forEach((cellData, index) => {
-                    const td = document.createElement('td');
-                    let formattedData = cellData != null ? String(cellData) : '';
-                    const config = columnConfigs[index] || {};
-                    if (config.formatter) {
-                        try { formattedData = config.formatter(cellData, rowData); }
-                        catch (formatError) { console.error(`Format Error for cellData "${cellData}" with formatter index ${index}: ${formatError}`); formattedData = 'Error'; }
-                    }
-                    if (config.className) { td.className = config.className; }
-                    td.textContent = formattedData;
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
-            });
-        } else {
-            const colCount = tbody.previousElementSibling?.querySelector('tr')?.children?.length || 1;
-            const tr = document.createElement('tr');
-            const td = document.createElement('td');
-            td.setAttribute('colspan', colCount);
-            td.textContent = noDataMessage;
-            td.style.textAlign = 'center';
-            td.style.color = '#AAAAAA';
-            tr.appendChild(td);
-        }
-    }
-
-    function formatDate(date) { if (!date || !(date instanceof Date) || isNaN(date)) return 'N/A'; return `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;    }
-    function formatNullableString(value) { return value == null || String(value).trim() === '' || String(value).trim().toLowerCase() === 'n/a' ? 'N/A' : String(value);    }
-    function parseDateValue(dateValue) { if (!dateValue) return null; let jsDate; if (typeof dateValue === 'number') { jsDate = XLSX.SSF.parse_date_code(dateValue); return new Date(jsDate.y, jsDate.m - 1, jsDate.d, jsDate.H || 0, jsDate.M || 0, jsDate.S || 0); } else if (dateValue instanceof Date) { jsDate = dateValue; } else if (typeof dateValue === 'string') { const parsed = new Date(dateValue); if (!isNaN(parsed.getTime())) { jsDate = parsed; } else { const parts = dateValue.match(/(\d{1,2})\s*(\w+)\s*(\d{4})/); if (parts && parts.length === 4) { try { jsDate = new Date(`${parts[2]} ${parts[1]}, ${parts[3]}`); } catch (e) { jsDate = null; } } else { const excelDateParts = dateValue.split(/[\/-]/); if (excelDateParts.length === 3) { let day, month, year; if (excelDateParts[0].length === 4) { year = parseInt(excelDateParts[0]); month = parseInt(excelDateParts[1]) -1; day = parseInt(excelDateParts[2]); } else if (excelDateParts[2].length === 4) { year = parseInt(excelDateParts[2]); month = parseInt(excelDateParts[0]) -1; day = parseInt(excelDateParts[1]); } if (!isNaN(day) && !isNaN(month) && !isNaN(year)) { jsDate = new Date(year, month, day); } } else { jsDate = null; } } } } else { jsDate = null; } if (jsDate && !isNaN(jsDate.getTime())) { return jsDate; } return null;     }
-    
-    // Extract data processing logic to be reused by both file upload and Microsoft Graph API
-    function processExcelData(jsonData) {
-        console.log("Processing Excel data, rows:", jsonData.length); // Debug log
-        
-        financialYears.clear();
-        const cleanedData = [];
-        
-        jsonData.forEach((rawRow, index) => {
-            const rowWithTrimmedKeys = {};
-            for (const key in rawRow) {
-                if (Object.hasOwnProperty.call(rawRow, key)) {
-                    const trimmedKey = key.trim();
-                    rowWithTrimmedKeys[trimmedKey] = rawRow[key];
-                }
-            }
-            
-            // Log first few rows for debugging
-            if (index < 3) {
-                console.log(`Row ${index} keys:`, Object.keys(rowWithTrimmedKeys));
-            }
-            
-            const cleanedRow = {};
-            cleanedRow.jsDate = parseDateValue(rowWithTrimmedKeys[EXPECTED_COLUMNS.DATE]);
-            if (!cleanedRow.jsDate) {
-                if (index < 5) console.log(`Row ${index} skipped: no valid date`);
-                return;
-            }
-            
-            const fy = getFinancialYear(cleanedRow.jsDate);
-            if (fy !== null) {
-                cleanedRow.fy = fy;
-                financialYears.add(fy);
-            } else {
-                return;
-            }
-            
-            cleanedRow.jsDueDate = parseDateValue(rowWithTrimmedKeys[EXPECTED_COLUMNS.DUE_DATE]);
-            cleanedRow.jsReceivedDate = parseDateValue(rowWithTrimmedKeys[EXPECTED_COLUMNS.RECEIVED_DATE]);
-            cleanedRow[EXPECTED_COLUMNS.INVOICE_NO] = String(rowWithTrimmedKeys[EXPECTED_COLUMNS.INVOICE_NO] || 'N/A').trim();
-            cleanedRow[EXPECTED_COLUMNS.INVOICE_VALUE] = cleanCurrency(rowWithTrimmedKeys[EXPECTED_COLUMNS.INVOICE_VALUE]);
-            cleanedRow[EXPECTED_COLUMNS.RECEIVED_VALUE] = cleanCurrency(rowWithTrimmedKeys[EXPECTED_COLUMNS.RECEIVED_VALUE]);
-            cleanedRow[EXPECTED_COLUMNS.CHARGES] = cleanCurrency(rowWithTrimmedKeys[EXPECTED_COLUMNS.CHARGES]);
-            cleanedRow[EXPECTED_COLUMNS.DUE_IN_USD] = cleanCurrency(rowWithTrimmedKeys[EXPECTED_COLUMNS.DUE_IN_USD]);
-            cleanedRow[EXPECTED_COLUMNS.DUE_PERIOD] = cleanCurrency(rowWithTrimmedKeys[EXPECTED_COLUMNS.DUE_PERIOD]);
-            cleanedRow[EXPECTED_COLUMNS.CUSTOMER] = String(rowWithTrimmedKeys[EXPECTED_COLUMNS.CUSTOMER] || '').trim();
-            cleanedRow[EXPECTED_COLUMNS.STATUS] = String(rowWithTrimmedKeys[EXPECTED_COLUMNS.STATUS] || '').trim();
-            cleanedRow[EXPECTED_COLUMNS.SUBSIDIARY] = String(rowWithTrimmedKeys[EXPECTED_COLUMNS.SUBSIDIARY] || '').trim();
-            
-            const softexValRaw = String(rowWithTrimmedKeys[EXPECTED_COLUMNS.SOFTEX] || '').trim();
-            cleanedRow[EXPECTED_COLUMNS.SOFTEX + '_VALUE'] = softexValRaw;
-            cleanedRow[EXPECTED_COLUMNS.SOFTEX] = (softexValRaw !== '' && softexValRaw !== '0') ? 1 : 0;
-            
-            const brcValRaw = String(rowWithTrimmedKeys[EXPECTED_COLUMNS.BRC] || '').trim();
-            cleanedRow[EXPECTED_COLUMNS.BRC + '_VALUE'] = brcValRaw;
-            cleanedRow[EXPECTED_COLUMNS.BRC] = (brcValRaw !== '' && brcValRaw !== '0') ? 1 : 0;
-            
-            cleanedData.push(cleanedRow);
         });
-        
-        allFinancialData = cleanedData;
-        
-        console.log("Processed data:", cleanedData.length, "rows"); // Debug log
-        console.log("Financial years found:", Array.from(financialYears)); // Debug log
-        
-        if(allFinancialData.length === 0){
-            alert("No valid data rows were found or parsed. Please check the Excel file format and column headers.");
-        }
-        
-        populateFyDropdown();
-        refreshDashboard();
-    }
+      });
 
-    function handleFileUpload(event) { 
-        const file = event.target.files[0]; 
-        if (!file) return; 
-        
-        document.body.style.cursor = 'wait'; 
-        const reader = new FileReader(); 
-        
-        reader.onload = (e) => { 
-            try { 
-                const data = new Uint8Array(e.target.result); 
-                const workbook = XLSX.read(data, { type: 'array', cellDates: false }); 
-                const firstSheetName = workbook.SheetNames[0]; 
-                const worksheet = workbook.Sheets[firstSheetName]; 
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true, defval: '' }); 
-                
-                // Use the extracted processing function
-                processExcelData(jsonData);
-                
-            } catch (error) { 
-                console.error("Error processing Excel file:", error); 
-                alert("Error processing Excel file. Check console for details."); 
-                allFinancialData = []; 
-                populateFyDropdown(); 
-                refreshDashboard(); 
-            } finally { 
-                document.body.style.cursor = 'default'; 
-                event.target.value = null; 
-            } 
-        }; 
-        
-        reader.onerror = (error) => { 
-            console.error("Error reading file:", error); 
-            alert("Error reading file. Check console for details."); 
-            document.body.style.cursor = 'default'; 
-            event.target.value = null; 
-        }; 
-        
-        reader.readAsArrayBuffer(file);    
-    }
-    function populateFyDropdown() { const yearSelect = document.getElementById('year'); yearSelect.innerHTML = '<option value="">All Years</option>'; const sortedFy = Array.from(financialYears).sort((a, b) => a - b); sortedFy.forEach(fyStartYear => { const option = document.createElement('option'); option.value = fyStartYear; option.textContent = `FY ${fyStartYear}-${String(fyStartYear + 1).slice(-2)}`; yearSelect.appendChild(option); }); document.getElementById('month').value = ""; }
-    function filterData() { const selectedFyStartYear = document.getElementById('year').value; const selectedMonth = document.getElementById('month').value; if (!selectedFyStartYear) { if (selectedMonth !== "") { return allFinancialData.filter(row => row.jsDate.getMonth() == parseInt(selectedMonth)); } else { return allFinancialData; } } const fyStart = parseInt(selectedFyStartYear); const fyStartDate = new Date(fyStart, 3, 1); const fyEndDate = new Date(fyStart + 1, 3, 0); fyStartDate.setHours(0, 0, 0, 0); fyEndDate.setHours(23, 59, 59, 999); let filtered = allFinancialData.filter(row => row.jsDate >= fyStartDate && row.jsDate <= fyEndDate); if (selectedMonth !== "") { const monthIndex = parseInt(selectedMonth); const calendarYear = monthIndex >= 3 ? fyStart : fyStart + 1; filtered = filtered.filter(row => row.jsDate.getFullYear() === calendarYear && row.jsDate.getMonth() === monthIndex); } return filtered;     }
-    function getPreviousPeriodData(fyStartYearStr, monthStr) { const currentFyStart = fyStartYearStr ? parseInt(fyStartYearStr) : null; const currentMonthIndex = (monthStr !== "" && monthStr !== null && monthStr !== undefined) ? parseInt(monthStr) : null; let prevStartDate, prevEndDate; if (currentMonthIndex !== null && currentFyStart !== null) { let prevMonthCalendarYear = currentMonthIndex >= 3 ? currentFyStart : currentFyStart + 1; let prevMonthIndex = currentMonthIndex - 1; if (prevMonthIndex < 0) { prevMonthIndex = 11; prevMonthCalendarYear--; } return allFinancialData.filter(row => row.jsDate.getFullYear() === prevMonthCalendarYear && row.jsDate.getMonth() === prevMonthIndex); } else if (currentFyStart !== null) { const prevFyStart = currentFyStart - 1; prevStartDate = new Date(prevFyStart, 3, 1); prevEndDate = new Date(prevFyStart + 1, 3, 0); prevStartDate.setHours(0, 0, 0, 0); prevEndDate.setHours(23, 59, 59, 999); return allFinancialData.filter(row => row.jsDate >= prevStartDate && row.jsDate <= prevEndDate); } else { if (financialYears.size === 0) return []; const latestFyStart = Math.max(...Array.from(financialYears)); const prevFyStart = latestFyStart - 1; prevStartDate = new Date(prevFyStart, 3, 1); prevEndDate = new Date(prevFyStart + 1, 3, 0); prevStartDate.setHours(0, 0, 0, 0); prevEndDate.setHours(23, 59, 59, 999); return allFinancialData.filter(row => row.jsDate >= prevStartDate && row.jsDate <= prevEndDate); }     }
-    function calculateFySalesByClient(fyStartYear) { if (fyStartYear === null || fyStartYear === undefined || isNaN(parseInt(fyStartYear))) return []; const targetFy = parseInt(fyStartYear); const salesMap = new Map(); allFinancialData.forEach(row => { if (row.fy === targetFy) { const customer = row[EXPECTED_COLUMNS.CUSTOMER]; const invoiceValue = row[EXPECTED_COLUMNS.INVOICE_VALUE]; if (customer && typeof invoiceValue === 'number' && !isNaN(invoiceValue)) { salesMap.set(customer, (salesMap.get(customer) || 0) + invoiceValue); } } }); return Array.from(salesMap.entries()).map(([customer, sales]) => ({ customer, sales })).sort((a, b) => b.sales - a.sales);    }
-
-    function calculateMetrics(data, allData) {
-          const metrics = {
-            totalSalesYear: 0, salesVsLastYearAmount: 0, totalSalesMonth: 0, salesVsLastMonthAmount: 0,
-            totalSalesPeriod: 0, totalReceivedPeriod: 0, salesByCustomerPeriod: [], cashFlowByCustomerPeriod: [],
-            outstandingTotalPeriod: 0, avgAgeing: 0, invoiceCount: 0, softexCount: 0, brcCount: 0,
-            activeClientsPeriodCount: 0, totalClientsHistoricalCount: 0, topRevenuePeriod: [],
-            totalChargesPeriod: 0, subsidiarySales: [],
-            outstandingByClientFromDueColumn: [],
-            previousFyTotalSales: 0, previousMonthTotalSales: 0,
-            activeClientList: [],
-          };
-          const selectedFyStartYear = document.getElementById('year').value; const selectedMonth = document.getElementById('month').value;
-          const salesByCustomerMap = new Map(); const cashFlowByCustomerMap = new Map();
-          const customersInPeriod = new Set();
-          let totalAgeingDaysSum = 0; let totalDueAmountForAgeing = 0;
-          const subsidiarySalesMap = new Map();
-          const today = new Date(); today.setHours(0, 0, 0, 0);
-
-          data.forEach((row) => {
-              const invoiceValue = row[EXPECTED_COLUMNS.INVOICE_VALUE]; const receivedValue = row[EXPECTED_COLUMNS.RECEIVED_VALUE];
-              const chargesValue = row[EXPECTED_COLUMNS.CHARGES]; const customer = row[EXPECTED_COLUMNS.CUSTOMER];
-              const subsidiary = row[EXPECTED_COLUMNS.SUBSIDIARY]; const dueDate = row.jsDueDate;
-              const dueForPeriod = row[EXPECTED_COLUMNS.DUE_PERIOD];
-
-              if (typeof invoiceValue === 'number' && !isNaN(invoiceValue)) { metrics.totalSalesPeriod += invoiceValue; if (customer) { salesByCustomerMap.set(customer, (salesByCustomerMap.get(customer) || 0) + invoiceValue); customersInPeriod.add(customer); } }
-              if (typeof receivedValue === 'number' && !isNaN(receivedValue)) { metrics.totalReceivedPeriod += receivedValue; if (customer) cashFlowByCustomerMap.set(customer, (cashFlowByCustomerMap.get(customer) || 0) + receivedValue); }
-              if (typeof chargesValue === 'number' && !isNaN(chargesValue)) { metrics.totalChargesPeriod += chargesValue; }
-              if (typeof dueForPeriod === 'number' && !isNaN(dueForPeriod)) { metrics.outstandingTotalPeriod += dueForPeriod; }
-
-              if (typeof dueForPeriod === 'number' && dueForPeriod > 0.01 && dueDate) {
-                   const referenceDate = new Date(dueDate); referenceDate.setHours(0, 0, 0, 0);
-                   if (today > referenceDate) {
-                       const diffTime = today.getTime() - referenceDate.getTime();
-                       const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-                       totalAgeingDaysSum += (dueForPeriod * diffDays); totalDueAmountForAgeing += dueForPeriod;
-                   }
-              }
-               if (row[EXPECTED_COLUMNS.SOFTEX] === 1) metrics.softexCount++;
-               if (row[EXPECTED_COLUMNS.BRC] === 1) metrics.brcCount++;
-               metrics.invoiceCount++;
-              if (subsidiary && subsidiary !== '' && typeof invoiceValue === 'number' && !isNaN(invoiceValue)) { subsidiarySalesMap.set(subsidiary, (subsidiarySalesMap.get(subsidiary) || 0) + invoiceValue); }
-          });
-
-          metrics.salesByCustomerPeriod = Array.from(salesByCustomerMap.entries()).sort((a, b) => b[1] - a[1]);
-          metrics.cashFlowByCustomerPeriod = Array.from(cashFlowByCustomerMap.entries()).sort((a, b) => b[1] - a[1]);
-          metrics.avgAgeing = totalDueAmountForAgeing > 0 ? Math.round(totalAgeingDaysSum / totalDueAmountForAgeing) : 0;
-          metrics.activeClientsPeriodCount = customersInPeriod.size;
-          metrics.activeClientList = Array.from(customersInPeriod).sort();
-          metrics.subsidiarySales = Array.from(subsidiarySalesMap.entries()).sort((a, b) => b[1] - a[1]);
-          const totalRevenuePeriod = metrics.totalSalesPeriod;
-          metrics.topRevenuePeriod = metrics.salesByCustomerPeriod.slice(0, 5).map(([customer, revenue]) => ({ customer: customer, revenue: revenue, contribution: totalRevenuePeriod > 0 ? (revenue / totalRevenuePeriod) * 100 : 0 }));
-
-          const outstandingByClientFromDueMap_Period = new Map();
-          data.forEach(row => {
-              const customer = row[EXPECTED_COLUMNS.CUSTOMER];
-              if (customer) {
-                  const dueValueFromPeriodColumn = row[EXPECTED_COLUMNS.DUE_PERIOD];
-                  if (typeof dueValueFromPeriodColumn === 'number' && !isNaN(dueValueFromPeriodColumn) && dueValueFromPeriodColumn > 0.001) {
-                      outstandingByClientFromDueMap_Period.set(customer, (outstandingByClientFromDueMap_Period.get(customer) || 0) + dueValueFromPeriodColumn);
-                  }
-              }
-          });
-          metrics.outstandingByClientFromDueColumn = Array.from(outstandingByClientFromDueMap_Period.entries()).filter(entry => entry[1] > 0.01).sort((a, b) => b[1] - a[1]);
+      // Navigation subitem clicks
+      navSubitems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
           
-          if (selectedMonth !== "") { metrics.totalSalesMonth = metrics.totalSalesPeriod; const prevMonthData = getPreviousPeriodData(selectedFyStartYear, selectedMonth); metrics.previousMonthTotalSales = prevMonthData.reduce((sum, row) => sum + (Number(row[EXPECTED_COLUMNS.INVOICE_VALUE]) || 0), 0); metrics.salesVsLastMonthAmount = metrics.totalSalesMonth - metrics.previousMonthTotalSales; }
-          if (selectedFyStartYear !== "") { const fyStart = parseInt(selectedFyStartYear); const fyStartDate = new Date(fyStart, 3, 1); const fyEndDate = new Date(fyStart + 1, 3, 0); fyStartDate.setHours(0,0,0,0); fyEndDate.setHours(23,59,59,999); const currentFyData = allData.filter(row => row.jsDate >= fyStartDate && row.jsDate <= fyEndDate); metrics.totalSalesYear = currentFyData.reduce((sum, row) => sum + (Number(row[EXPECTED_COLUMNS.INVOICE_VALUE]) || 0), 0); const prevFyData = getPreviousPeriodData(selectedFyStartYear, ""); metrics.previousFyTotalSales = prevFyData.reduce((sum, row) => sum + (Number(row[EXPECTED_COLUMNS.INVOICE_VALUE]) || 0), 0); metrics.salesVsLastYearAmount = metrics.totalSalesYear - metrics.previousFyTotalSales; } else { metrics.totalSalesYear = allData.reduce((sum, row) => sum + (Number(row[EXPECTED_COLUMNS.INVOICE_VALUE]) || 0), 0); const prevFyDataForAll = getPreviousPeriodData("", ""); metrics.previousFyTotalSales = prevFyDataForAll.reduce((sum, row) => sum + (Number(row[EXPECTED_COLUMNS.INVOICE_VALUE]) || 0), 0); metrics.salesVsLastYearAmount = metrics.totalSalesYear - metrics.previousFyTotalSales; }
+          const targetPage = item.getAttribute('data-page');
           
-          let historicalEndDate;
-          if (selectedFyStartYear) { const fyEndYear = parseInt(selectedFyStartYear) + 1; historicalEndDate = new Date(fyEndYear, 3, 0); }
-          else { historicalEndDate = allData.length > 0 ? allData.reduce((max, row) => row.jsDate > max ? row.jsDate : max, allData[0].jsDate) : new Date(); }
-          historicalEndDate.setHours(23, 59, 59, 999);
-          const historicalCustomers = new Set();
-          allData.forEach(row => { if (row.jsDate <= historicalEndDate) { const customer = row[EXPECTED_COLUMNS.CUSTOMER]; if (customer) { historicalCustomers.add(customer); } } });
-          metrics.totalClientsHistoricalCount = historicalCustomers.size;
+          // Update active nav item
+          navItems.forEach(nav => nav.classList.remove('active'));
+          navSubitems.forEach(nav => nav.classList.remove('active'));
+          item.classList.add('active');
+          
+          // Update page title
+          updatePageTitle(targetPage);
+          
+          // Hide sidebar on mobile after navigation
+          if (window.innerWidth <= 768) {
+            sidebar.classList.remove('show');
+          }
+        });
+      });
 
-          return metrics;
-     }
-
-    function showPopup(popupElement) { if (popupElement) popupElement.style.display = 'flex'; }
-    function hidePopup(popupElement) { if (popupElement) popupElement.style.display = 'none'; }
-    
-    function showFySalesDetailsPopup() { const selectedFyValue = document.getElementById('year').value; if (!selectedFyValue) { alert("Please select a specific Financial Year from the filter."); return; } const fyStart = parseInt(selectedFyValue); const clientSalesData = calculateFySalesByClient(fyStart); const fySalesPopupTitleElement = document.querySelector('#fySalesClientPopup .popup-header h4'); const fySalesPopupSummaryElement = document.querySelector('#fySalesClientPopup .popup-summary'); fySalesPopupTitleElement.textContent = `Client Sales for FY ${fyStart}-${String(fyStart + 1).slice(-2)}`; const currentFyTotal = currentMetrics.totalSalesYear; const prevFyTotal = currentMetrics.previousFyTotalSales; const diff = currentFyTotal - prevFyTotal; const percentChange = formatPercentage(currentFyTotal, prevFyTotal); const comparisonText = `Total Sales: ${formatCurrency(currentFyTotal)}. Compared to Previous FY (${formatCurrency(prevFyTotal)}): ${diff >= 0 ? '▲' : '▼'} ${formatCurrency(Math.abs(diff))} (${percentChange})`; fySalesPopupSummaryElement.innerHTML = comparisonText; fySalesPopupSummaryElement.className = `popup-summary ${diff >= 0 ? 'highlight' : 'down'}`; const tableData = clientSalesData.map(item => [item.customer, item.sales]); updateTable('fySalesClientTableBody', tableData, [ { }, { formatter: formatCurrency, className: 'numeric' } ]); showPopup(fySalesClientPopupElement);    }
-    
-    function showMonthSalesDetailsPopup() { const selectedMonthValue = document.getElementById('month').value; const selectedFyValue = document.getElementById('year').value; if (selectedMonthValue === "") { alert("Please select a specific Month from the filter."); return; } if (currentPeriodFilteredData.length === 0) { alert("No data available for the selected month."); return; } const monthIndex = parseInt(selectedMonthValue); const fyStartForTitle = selectedFyValue ? parseInt(selectedFyValue) : currentPeriodFilteredData[0].jsDate.getFullYear(); const calendarYear = monthIndex >= 3 ? fyStartForTitle : fyStartForTitle + 1; const monthSalesPopupTitleElement = document.querySelector('#monthSalesClientPopup .popup-header h4'); const monthSalesPopupSummaryElement = document.querySelector('#monthSalesClientPopup .popup-summary'); monthSalesPopupTitleElement.textContent = `Client Sales for ${monthNames[monthIndex]} ${calendarYear}`; const salesMap = new Map(); currentPeriodFilteredData.forEach(row => { const customer = row[EXPECTED_COLUMNS.CUSTOMER]; const invoiceValue = row[EXPECTED_COLUMNS.INVOICE_VALUE]; if (customer && typeof invoiceValue === 'number' && !isNaN(invoiceValue)) { salesMap.set(customer, (salesMap.get(customer) || 0) + invoiceValue); } }); const clientSalesData = Array.from(salesMap.entries()).map(([customer, sales]) => ({ customer, sales })).sort((a, b) => b.sales - a.sales); const currentMonthTotal = currentMetrics.totalSalesMonth; const prevMonthTotal = currentMetrics.previousMonthTotalSales; const diff = currentMonthTotal - prevMonthTotal; const percentChange = formatPercentage(currentMonthTotal, prevMonthTotal); const comparisonText = `Total Sales: ${formatCurrency(currentMonthTotal)}. Compared to Previous Month (${formatCurrency(prevMonthTotal)}): ${diff >= 0 ? '▲' : '▼'} ${formatCurrency(Math.abs(diff))} (${percentChange})`; monthSalesPopupSummaryElement.innerHTML = comparisonText; monthSalesPopupSummaryElement.className = `popup-summary ${diff >= 0 ? 'highlight' : 'down'}`; const tableData = clientSalesData.map(item => [item.customer, item.sales]); updateTable('monthSalesClientTableBody', tableData, [ { }, { formatter: formatCurrency, className: 'numeric' } ]); showPopup(monthSalesClientPopupElement);    }
-
-    // BUG FIX: Rewritten function for reliability
-    function showPeriodOutstandingDetailsPopup() {
-        const outstandingItems = currentPeriodFilteredData
-            .filter(row => (row[EXPECTED_COLUMNS.DUE_PERIOD] || 0) > 0.01)
-            .map(row => ({
-                customer: row[EXPECTED_COLUMNS.CUSTOMER],
-                invoiceNo: row[EXPECTED_COLUMNS.INVOICE_NO],
-                invDate: row.jsDate,
-                dueDate: row.jsDueDate,
-                invValue: row[EXPECTED_COLUMNS.INVOICE_VALUE] || 0,
-                rcvdValue: row[EXPECTED_COLUMNS.RECEIVED_VALUE] || 0,
-                outstanding: row[EXPECTED_COLUMNS.DUE_PERIOD] || 0,
-            })).sort((a,b) => b.outstanding - a.outstanding);
-
-        const totalOutstandingInPopup = outstandingItems.reduce((sum, item) => sum + item.outstanding, 0);
-        periodOutstandingPopupSummaryElement.textContent = `Total Outstanding (from 'Due' column): ${formatCurrency(totalOutstandingInPopup)}. Average Age: ${currentMetrics.avgAgeing} days.`;
-        periodOutstandingTableContainerElement.innerHTML = ''; // Clear previous content
-
-        if (outstandingItems.length === 0) {
-            periodOutstandingTableContainerElement.innerHTML = `<div class="no-data-message">No outstanding items for this period.</div>`;
-        } else {
-            const table = document.createElement('table');
-            const thead = document.createElement('thead');
-            const tbody = document.createElement('tbody');
-            
-            // Create Header
-            const headerRow = document.createElement('tr');
-            ['Customer', 'Inv. No', 'Inv. Date', 'Due Date', "Inv. Value", "Rcvd Value", "Outstanding"].forEach((headerText, index) => {
-                const th = document.createElement('th');
-                th.textContent = headerText;
-                if ([4,5,6].includes(index)) th.classList.add('numeric');
-                headerRow.appendChild(th);
-            });
-            thead.appendChild(headerRow);
-            
-            // Create Body
-            outstandingItems.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${formatNullableString(item.customer)}</td>
-                    <td>${formatNullableString(item.invoiceNo)}</td>
-                    <td>${formatDate(item.invDate)}</td>
-                    <td>${formatDate(item.dueDate)}</td>
-                    <td class="numeric">${formatCurrency(item.invValue, 2)}</td>
-                    <td class="numeric">${formatCurrency(item.rcvdValue, 2)}</td>
-                    <td class="numeric">${formatCurrency(item.outstanding, 2)}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            table.appendChild(thead);
-            table.appendChild(tbody);
-            periodOutstandingTableContainerElement.appendChild(table);
+      // Close sidebar on mobile when clicking outside
+      document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768 && 
+            !sidebar.contains(e.target) && 
+            !menuToggle.contains(e.target) && 
+            sidebar.classList.contains('show')) {
+          sidebar.classList.remove('show');
         }
-        showPopup(periodOutstandingPopupElement);
-    }
+      });
 
-    function showChargesDetailsPopup() { const chargesDetailsPopupTitleElement = document.querySelector('#chargesDetailsPopup .popup-header h4'); const chargesDetailsPopupSummaryElement = document.querySelector('#chargesDetailsPopup .popup-summary'); if (currentMetrics.totalChargesPeriod < 0.01 && currentPeriodFilteredData.filter(row => (row[EXPECTED_COLUMNS.CHARGES] || 0) > 0).length === 0) { alert("No charges data to display for the selected period."); return; } chargesDetailsPopupTitleElement.textContent = `Charges Details (Period)`; chargesDetailsPopupSummaryElement.textContent = `Total Charges for Period: ${formatCurrency(currentMetrics.totalChargesPeriod)}`; const chargesItems = currentPeriodFilteredData.filter(row => (row[EXPECTED_COLUMNS.CHARGES] || 0) > 0).map(row => ({ customer: row[EXPECTED_COLUMNS.CUSTOMER], invDate: row.jsDate, chargeAmount: Number(row[EXPECTED_COLUMNS.CHARGES]) })).sort((a,b) => b.chargeAmount - a.chargeAmount); const tableData = chargesItems.map(item => [item.customer, item.invDate, item.chargeAmount]); updateTable('chargesDetailsTableBody', tableData, [ {}, { formatter: formatDate }, { formatter: (val) => formatCurrency(Number(val)), className: 'numeric' } ]); showPopup(chargesDetailsPopupElement);    }
-    
-    function showActiveClientsPopup() {
-        if (currentMetrics.activeClientList.length === 0) {
-            alert("No active clients in the selected period.");
-            return;
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+          sidebar.classList.remove('show');
+          sidebar.classList.remove('collapsed');
+          mainContent.classList.remove('expanded');
         }
-        activeClientsPopupSummaryElement.textContent = `Showing ${currentMetrics.activeClientsPeriodCount} unique clients active in this period.`;
-        const tableData = currentMetrics.activeClientList.map(client => [client]);
-        updateTable('activeClientsTableBody', tableData, [{}]);
-        showPopup(activeClientsPopupElement);
+      });
     }
 
-    function handleInvoiceChartBarClick(type) { 
-        const invoiceChartDetailsPopupTitleElement = document.querySelector('#invoiceChartDetailsPopup .popup-header h4');
-        const invoiceChartDetailsPopupSummaryElement = document.querySelector('#invoiceChartDetailsPopup .popup-summary');
-        if (currentPeriodFilteredData.length === 0) { alert(`No data to display details for ${type} for the selected period.`); return; } 
-        let detailsData = []; let summaryText = ""; let popupTitle = ""; 
-        if (type === 'Invoices') { popupTitle = `All Invoice Details (Period)`; detailsData = currentPeriodFilteredData; summaryText = `Total Invoices in Period: ${currentMetrics.invoiceCount}`; } 
-        else if (type === 'Softex') { popupTitle = `Softex Invoice Details (Period)`; detailsData = currentPeriodFilteredData.filter(row => row[EXPECTED_COLUMNS.SOFTEX] === 1); summaryText = `Total Invoices with Softex in Period: ${currentMetrics.softexCount}`; } 
-        else if (type === 'BRC') { popupTitle = `BRC Invoice Details (Period)`; detailsData = currentPeriodFilteredData.filter(row => row[EXPECTED_COLUMNS.BRC] === 1); summaryText = `Total Invoices with BRC in Period: ${currentMetrics.brcCount}`; } 
-        else { return; } 
-        
-        invoiceChartDetailsPopupTitleElement.textContent = popupTitle; 
-        invoiceChartDetailsPopupSummaryElement.textContent = summaryText; 
-        const tableData = detailsData.map(row => [ 
-            row[EXPECTED_COLUMNS.INVOICE_NO], 
-            row[EXPECTED_COLUMNS.CUSTOMER], 
-            row.jsDate, 
-            row[EXPECTED_COLUMNS.INVOICE_VALUE], 
-            row[EXPECTED_COLUMNS.SOFTEX + '_VALUE'], 
-            row[EXPECTED_COLUMNS.BRC + '_VALUE'] 
-        ]); 
-        updateTable('invoiceChartDetailsTableBody', tableData, [ 
-            { formatter: formatNullableString }, 
-            { formatter: formatNullableString }, 
-            { formatter: formatDate }, 
-            { formatter: formatCurrency, className: 'numeric' }, 
-            { formatter: formatNullableString }, 
-            { formatter: formatNullableString }
-        ]); 
-        showPopup(invoiceChartDetailsPopupElement);    
+    // Update page title based on selected page
+    function updatePageTitle(targetPage) {
+      const pageTitle = document.getElementById('pageTitle');
+      
+      switch(targetPage) {
+        case 'finance-dashboard':
+        case 'Export sales':
+          pageTitle.textContent = 'Export Sales Dashboard';
+          break;
+        case 'P&L':
+          pageTitle.textContent = 'P&L Dashboard';
+          break;
+        case 'IRM':
+          pageTitle.textContent = 'IRM Dashboard';
+          break;
+        case 'branch':
+          pageTitle.textContent = 'Branch Dashboard';
+          break;
+        case 'subsidiaries':
+          pageTitle.textContent = 'Subsidiaries Dashboard';
+          break;
+        case 'share-holding':
+          pageTitle.textContent = 'Share Holding Dashboard';
+          break;
+        case 'evoke-technologies':
+          pageTitle.textContent = 'Evoke Technologies Dashboard';
+          break;
+        case 'write-off':
+          pageTitle.textContent = 'Write-Off Dashboard';
+          break;
+        case 'imports':
+          pageTitle.textContent = 'Imports Dashboard';
+          break;
+        default:
+          pageTitle.textContent = 'Finance Dashboard';
+      }
     }
 
-    function updateDashboardUI(metrics) { 
-        const updateText = (id, value) => { const elem = document.getElementById(id); if (elem) elem.innerText = value; else console.warn(`Element with ID '${id}' not found.`); }; 
-        updateText('totalSalesYear', formatCurrency(metrics.totalSalesYear)); 
-        const salesVsYearElem = document.getElementById('salesVsLastYear'); 
-        if (salesVsYearElem) { const percentChangeFY = formatPercentage(metrics.totalSalesYear, metrics.previousFyTotalSales); salesVsYearElem.innerHTML = `${metrics.salesVsLastYearAmount >= 0 ? '▲' : '▼'} ${formatCurrency(Math.abs(metrics.salesVsLastYearAmount))} (${percentChangeFY}) vs last FY`; salesVsYearElem.className = metrics.salesVsLastYearAmount >= 0 ? 'highlight' : 'down'; } 
-        updateText('totalSalesMonth', formatCurrency(metrics.totalSalesMonth)); 
-        const salesVsMonthElem = document.getElementById('salesVsLastMonth'); 
-        if (salesVsMonthElem) { const percentChangeM = formatPercentage(metrics.totalSalesMonth, metrics.previousMonthTotalSales); salesVsMonthElem.innerHTML = `${metrics.salesVsLastMonthAmount >= 0 ? '▲' : '▼'} ${formatCurrency(Math.abs(metrics.salesVsLastMonthAmount))} (${percentChangeM}) vs last month`; salesVsMonthElem.className = metrics.salesVsLastMonthAmount >= 0 ? 'highlight' : 'down'; } 
-        
-        updateTable('salesByCustomerTable', metrics.salesByCustomerPeriod.slice(0, 10).map(item => [item[0], item[1]]), [{}, { formatter: formatCurrency, className: 'numeric'}]); 
-        
-        updateText('cashFlowTotalPeriod', formatCurrency(metrics.totalReceivedPeriod)); 
-        updateTable('cashFlowCustomerTable', metrics.cashFlowByCustomerPeriod.slice(0, 5).map(item => [item[0], item[1]]), [{}, { formatter: formatCurrency, className: 'numeric'}]); 
-        updateText('outstandingTotal', formatCurrency(metrics.outstandingTotalPeriod)); 
-        updateText('avgAgeing', `Avg Age: ${metrics.avgAgeing} days`); 
-        if (invoiceChart) { invoiceChart.data.datasets[0].data = [metrics.invoiceCount, metrics.softexCount, metrics.brcCount]; invoiceChart.update(); } 
-        updateText('activeClientsPeriod', metrics.activeClientsPeriodCount); 
-        if (activeClientsChart) { activeClientsChart.data.datasets[0].data = [ metrics.totalClientsHistoricalCount, metrics.activeClientsPeriodCount ]; activeClientsChart.update(); } 
-        const topRevenueTableData = metrics.topRevenuePeriod.map(item => [item.customer, item.revenue, item.contribution]); 
-        updateTable('topRevenueTable', topRevenueTableData, [ {}, {formatter: formatCurrency, className: 'numeric'}, {formatter: (val) => `${val.toFixed(1)}%`, className: 'numeric'} ]); 
-        updateText('totalCharges', formatCurrency(metrics.totalChargesPeriod)); 
-        if (subsidiariesChart) { if (metrics.subsidiarySales.length > 0) { subsidiariesChart.data.labels = metrics.subsidiarySales.map(item => item[0]); subsidiariesChart.data.datasets[0].data = metrics.subsidiarySales.map(item => item[1]); } else { subsidiariesChart.data.labels = ['N/A']; subsidiariesChart.data.datasets[0].data = [0]; } subsidiariesChart.update(); } 
-        const outstandingClientTableData = metrics.outstandingByClientFromDueColumn.slice(0, 6); 
-        updateTable('outstandingByClientTable', outstandingClientTableData.map(item => [item[0], item[1]]), [{}, {formatter: formatCurrency, className: 'numeric'}]); 
+    // Page loading functionality
+    function loadPage(pageId) {
+      const contentFrame = document.getElementById('contentFrame');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      
+      // Show loading indicator
+      loadingIndicator.style.display = 'flex';
+      contentFrame.style.display = 'none';
+      
+      // Load the appropriate page
+      if (pageId === 'finance-dashboard') {
+        contentFrame.src = 'dashboard.html';
+      } else {
+        // For other pages, you can create specific HTML files or handle them as needed
+        contentFrame.src = 'dashboard.html'; // Default for now
+      }
+      
+      console.log(`Loading page: ${pageId}`);
     }
 
-    function refreshDashboard() { 
-        if (allFinancialData.length === 0) { 
-            const emptyMetrics = { totalSalesYear: 0, salesVsLastYearAmount: 0, previousFyTotalSales: 0, totalSalesMonth: 0, salesVsLastMonthAmount: 0, previousMonthTotalSales: 0, totalSalesPeriod: 0, totalReceivedPeriod: 0, salesByCustomerPeriod: [], cashFlowByCustomerPeriod: [], outstandingTotalPeriod: 0, avgAgeing: 0, invoiceCount: 0, softexCount: 0, brcCount: 0, activeClientsPeriodCount: 0, totalClientsHistoricalCount: 0, topRevenuePeriod: [], totalChargesPeriod: 0, subsidiarySales: [], outstandingByClientFromDueColumn: [], activeClientList: [] }; 
-            currentPeriodFilteredData = []; 
-            currentMetrics = emptyMetrics; 
-            updateDashboardUI(emptyMetrics); 
-            if (invoiceChart) { invoiceChart.data.datasets[0].data = [0,0,0]; invoiceChart.update(); } 
-            if (activeClientsChart) { activeClientsChart.data.datasets[0].data=[0,0]; activeClientsChart.update(); } 
-            if (subsidiariesChart) { subsidiariesChart.data.labels=[]; subsidiariesChart.data.datasets[0].data=[]; subsidiariesChart.update(); } 
-            return; 
-        } 
-        currentPeriodFilteredData = filterData(); 
-        currentMetrics = calculateMetrics(currentPeriodFilteredData, allFinancialData); 
-        updateDashboardUI(currentMetrics);    
+    // Handle iframe load completion
+    function handleFrameLoad() {
+      const contentFrame = document.getElementById('contentFrame');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      
+      // Hide loading indicator and show content
+      loadingIndicator.style.display = 'none';
+      contentFrame.style.display = 'block';
+      
+      console.log('Finance Dashboard loaded successfully');
     }
 
-    document.addEventListener('DOMContentLoaded', () => { 
-        initializeCharts(); 
-        fySalesClientPopupElement = document.getElementById('fySalesClientPopup');
-        monthSalesClientPopupElement = document.getElementById('monthSalesClientPopup');
-        periodOutstandingPopupElement = document.getElementById('periodOutstandingPopup');
-        chargesDetailsPopupElement = document.getElementById('chargesDetailsPopup');
-        invoiceChartDetailsPopupElement = document.getElementById('invoiceChartDetailsPopup');
-        periodOutstandingPopupTitleElement = document.querySelector('#periodOutstandingPopup .popup-header h4');
-        periodOutstandingPopupSummaryElement = document.querySelector('#periodOutstandingPopup .popup-summary');
-        periodOutstandingTableContainerElement = document.getElementById('periodOutstandingTableContainer');
-        
-        activeClientsPopupElement = document.getElementById('activeClientsPopup');
-        activeClientsPopupSummaryElement = document.querySelector('#activeClientsPopup .popup-summary');
-
-        document.getElementById('totalSalesYear')?.addEventListener('click', showFySalesDetailsPopup); 
-        document.getElementById('totalSalesMonth')?.addEventListener('click', showMonthSalesDetailsPopup); 
-        document.getElementById('outstandingTotal')?.addEventListener('click', showPeriodOutstandingDetailsPopup); 
-        document.getElementById('totalCharges')?.addEventListener('click', showChargesDetailsPopup); 
-        document.getElementById('activeClientsPeriod')?.addEventListener('click', showActiveClientsPopup);
-
-        const allPopups = document.querySelectorAll('.popup-container'); 
-        allPopups.forEach(popup => { 
-            const closeButton = popup.querySelector('.popup-close-btn'); 
-            if (closeButton) { closeButton.addEventListener('click', () => hidePopup(popup)); } 
-            popup.addEventListener('click', (event) => { if (event.target === popup) { hidePopup(popup); } }); 
-        }); 
-        
-        refreshDashboard();
-        
-        // Initialize the app and try to load data automatically
-        initializeApp();
+    // Initialize navigation when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeNavigation();
+      console.log('Layout initialized with Finance Dashboard');
     });
-
-    document.getElementById('file-upload')?.addEventListener('change', handleFileUpload);
-    document.getElementById('year')?.addEventListener('change', refreshDashboard);
-    document.getElementById('month')?.addEventListener('change', refreshDashboard);
   </script>
 </body>
 </html>
