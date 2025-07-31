@@ -496,7 +496,7 @@
                     showStatus('success', 'Softex BRC data loaded successfully');
                     updateButtonText(BUTTON_TEXT.REFRESH);
                 } else {
-                    showStatus('error', 'Excel file not found in OneDrive');
+                    showStatus('error', 'Excel file not found/You do not have access to it');
                     updateButtonText(BUTTON_TEXT.GET_DATA);
                 }
                 
@@ -589,7 +589,7 @@
                     showStatus('success', 'Softex BRC data loaded successfully');
                     updateButtonText(BUTTON_TEXT.REFRESH);
                 } else {
-                    showStatus('error', 'Excel file not found in OneDrive');
+                    showStatus('error', 'Excel file not found/You do not have access to it');
                     updateButtonText(BUTTON_TEXT.GET_DATA);
                 }
                 
@@ -750,12 +750,12 @@
                             }
                             
                             // If still no match, try partial match
-                            if (!targetFile) {
-                                console.log("Case-insensitive match failed, trying partial match");
-                                targetFile = sharedData.value?.find(item => 
-                                    item.name?.includes("EDIS") && item.name?.includes("DB-Test") && item.file
-                                );
-                            }
+                            // if (!targetFile) {
+                            //     console.log("Case-insensitive match failed, trying partial match");
+                            //     targetFile = sharedData.value?.find(item => 
+                            //         item.name?.includes("EDIS") && item.name?.includes("DB") && item.file
+                            //     );
+                            // }
                             
                             if (targetFile) {
                                 console.log("Found target file in shared items:", targetFile.name);
@@ -801,7 +801,7 @@
                     // Additional fallback: Try different search approaches
                     try {
                         console.log("Additional fallback: Searching for files with partial name match");
-                        const partialSearchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='EDIS DB-Test')`;
+                        const partialSearchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='EDIS DB')`;
                         const partialSearchResponse = await fetch(partialSearchUrl, { headers });
                         
                         if (partialSearchResponse.ok) {
@@ -810,7 +810,7 @@
                             console.log("Files found in partial search:", partialResults.value?.map(item => item.name));
                             
                             const partialFile = partialResults.value?.find(item => 
-                                item.name?.includes("EDIS") && item.name?.includes("DB-Test") && item.file
+                                item.name?.includes("EDIS") && item.name?.includes("DB") && item.file
                             );
                             
                             if (partialFile) {
