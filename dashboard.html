@@ -17,10 +17,112 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>   
   
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">   
+  
   <style>
+    /* Header styles */
+    .top-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+
+    .header-logo i {
+      font-size: 20px;
+      color: #3498db;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FFFFFF;
+      font-size: 14px;
+    }
+
+    .user-info i {
+      color: #3498db;
+    }
+
+    .sign-in-btn {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sign-in-btn:hover {
+      background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+
+    .sign-in-btn:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .sign-out-btn {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .sign-out-btn:hover {
+      background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+      transform: translateY(-1px);
+    }
+
     /* THEME: Forest & Amber (Dark Mode) */
     body {
       margin: 0;
+      padding-top: 60px; /* Added padding for fixed header */
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #1A2226;
       color: #D1D5DB;
@@ -186,6 +288,27 @@
 </head>
 
 <body>
+  <!-- Top Header with Sign In -->
+  <div class="top-header">
+    <div class="header-left">
+      <!-- Removed redundant Finance Dashboard title -->
+    </div>
+    <div class="header-right">
+      <div id="userInfo" class="user-info" style="display: none;">
+        <i class="fas fa-user"></i>
+        <span id="userName">User</span>
+      </div>
+      <button id="signInBtn" class="sign-in-btn" onclick="globalSignIn()">
+        <i class="fas fa-sign-in-alt"></i>
+        Sign In
+      </button>
+      <button id="signOutBtn" class="sign-out-btn" onclick="globalSignOut()" style="display: none;">
+        <i class="fas fa-sign-out-alt"></i>
+        Sign Out
+      </button>
+    </div>
+  </div>
+
   <!-- Filter Slicers -->
   <div class="filter-bar">
     <div class="filter-group">
@@ -229,6 +352,17 @@
 
 
   <script>
+  // Global authentication variables (shared with softex-brc.html)
+  let globalAuth = {
+    isAuthenticated: false,
+    accessToken: null,
+    account: null,
+    userName: null
+  };
+
+  // Authentication state key for localStorage (shared key)
+  const AUTH_STATE_KEY = 'finance_dashboard_auth_state';
+
   // Button text constants
   const BUTTON_TEXT = {
     SIGN_IN: "Get Data",
@@ -243,6 +377,187 @@
     }
   }
 
+  // Global sign-in function that loads data for both screens
+  async function globalSignIn() {
+    try {
+      const signInBtn = document.getElementById('signInBtn');
+      signInBtn.disabled = true;
+      signInBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+      
+      console.log('Starting global sign-in process from dashboard...');
+      
+      const loginRequest = {
+        scopes: ['User.Read', 'Files.Read', 'Files.Read.All', 'Sites.Read.All']
+      };
+      
+      const response = await msalInstance.loginPopup(loginRequest);
+      console.log('Authentication successful:', response);
+      
+      // Get access token
+      const tokenRequest = {
+        scopes: ['Files.Read', 'Files.Read.All', 'Sites.Read.All'],
+        account: response.account
+      };
+      const tokenResponse = await msalInstance.acquireTokenSilent(tokenRequest);
+      
+      // Update global auth state
+      globalAuth.isAuthenticated = true;
+      globalAuth.accessToken = tokenResponse.accessToken;
+      globalAuth.account = response.account;
+      globalAuth.userName = response.account.name || response.account.username;
+      
+      // Save authentication state to localStorage for cross-screen sharing
+      saveAuthState();
+      
+      // Update UI to show signed-in state
+      updateHeaderUI();
+      
+      // Load dashboard data
+      await loadDashboardData();
+      
+      // Notify that global authentication is complete
+      console.log('Global authentication complete. All screens can now access data.');
+      
+    } catch (error) {
+      console.error('Global sign-in failed:', error);
+      alert('Sign-in failed: ' + error.message);
+      
+      // Reset button state
+      const signInBtn = document.getElementById('signInBtn');
+      signInBtn.disabled = false;
+      signInBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+    }
+  }
+
+  // Global sign-out function
+  async function globalSignOut() {
+    try {
+      console.log('Starting global sign-out process from dashboard...');
+      
+      // Clear MSAL cache
+      await msalInstance.logoutPopup();
+      
+      // Clear global auth state
+      globalAuth.isAuthenticated = false;
+      globalAuth.accessToken = null;
+      globalAuth.account = null;
+      globalAuth.userName = null;
+      
+      // Clear localStorage
+      localStorage.removeItem(AUTH_STATE_KEY);
+      
+      // Update UI
+      updateHeaderUI();
+      
+      // Reset dashboard
+      clearDashboard();
+      updateSignInButtonText(BUTTON_TEXT.SIGN_IN);
+      
+      console.log('Global sign-out complete.');
+      
+    } catch (error) {
+      console.error('Sign-out error:', error);
+      alert('Sign-out failed: ' + error.message);
+    }
+  }
+
+  // Save authentication state to localStorage
+  function saveAuthState() {
+    const authState = {
+      isAuthenticated: globalAuth.isAuthenticated,
+      userName: globalAuth.userName,
+      accountId: globalAuth.account?.homeAccountId,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(AUTH_STATE_KEY, JSON.stringify(authState));
+  }
+
+  // Load authentication state from localStorage
+  function loadAuthState() {
+    try {
+      const saved = localStorage.getItem(AUTH_STATE_KEY);
+      if (saved) {
+        const authState = JSON.parse(saved);
+        
+        // Check if the saved state is not too old (24 hours)
+        const isExpired = (Date.now() - authState.timestamp) > (24 * 60 * 60 * 1000);
+        
+        if (!isExpired && authState.isAuthenticated) {
+          console.log('Found valid authentication state in localStorage');
+          return authState;
+        } else {
+          console.log('Authentication state expired, clearing...');
+          localStorage.removeItem(AUTH_STATE_KEY);
+        }
+      }
+    } catch (error) {
+      console.log('Error loading authentication state:', error);
+      localStorage.removeItem(AUTH_STATE_KEY);
+    }
+    return null;
+  }
+
+  // Update header UI based on authentication state
+  function updateHeaderUI() {
+    const signInBtn = document.getElementById('signInBtn');
+    const signOutBtn = document.getElementById('signOutBtn');
+    const userInfo = document.getElementById('userInfo');
+    const userName = document.getElementById('userName');
+    
+    if (globalAuth.isAuthenticated) {
+      signInBtn.style.display = 'none';
+      signOutBtn.style.display = 'flex';
+      userInfo.style.display = 'flex';
+      userName.textContent = globalAuth.userName || 'User';
+    } else {
+      signInBtn.style.display = 'flex';
+      signInBtn.disabled = false;
+      signInBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+      signOutBtn.style.display = 'none';
+      userInfo.style.display = 'none';
+    }
+  }
+
+  // Load dashboard data using global authentication
+  async function loadDashboardData() {
+    try {
+      if (!globalAuth.isAuthenticated || !globalAuth.accessToken) {
+        throw new Error('Not authenticated');
+      }
+      
+      updateSignInButtonText('Loading Data...');
+      
+      // Use existing dashboard data loading logic with global auth
+      await loadDataWithGlobalAuth();
+      
+      updateSignInButtonText(BUTTON_TEXT.REFRESH);
+      
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      alert('Failed to load dashboard data: ' + error.message);
+      updateSignInButtonText(BUTTON_TEXT.SIGN_IN);
+    }
+  }
+
+  // Clear dashboard data
+  function clearDashboard() {
+    // Reset all dashboard elements to initial state
+    document.getElementById('totalSalesYear').textContent = '$0';
+    document.getElementById('salesVsLastYear').textContent = '▲ $0 vs last FY';
+    document.getElementById('totalSalesMonth').textContent = '$0';
+    document.getElementById('salesVsLastMonth').textContent = '▼ $0 vs last month';
+    document.getElementById('cashFlowTotalPeriod').textContent = '$0';
+    document.getElementById('outstandingTotal').textContent = '$0';
+    document.getElementById('avgAgeing').textContent = 'Avg Age: 0 days';
+    
+    // Clear tables
+    document.getElementById('salesByCustomerTable').innerHTML = '';
+    document.getElementById('cashFlowCustomerTable').innerHTML = '';
+    
+    // Clear filters
+    document.getElementById('year').innerHTML = '<option value="">All Years</option>';
+  }
+
   //Using Microsoft Graph API to read Excel files from OneDrive requires authentication
     const msalConfig = {
       auth: {
@@ -255,52 +570,63 @@
         storeAuthStateInCookie: false
       }
     };
-    
-    console.log("MSAL Config redirect URI:", msalConfig.auth.redirectUri); // Debug log
-    
     const msalInstance = new msal.PublicClientApplication(msalConfig);
 
     async function signIn() {
       try {
-        console.log("Starting sign-in process..."); // Debug log
-        document.body.style.cursor = 'wait';
-        
-        console.log("MSAL Config:", msalConfig); // Debug log
-        
-        const loginResponse = await msalInstance.loginPopup({
-          scopes: ["Files.Read", "Sites.Read.All"],
-          prompt: "select_account" // Force account selection
-        });
-        
-        console.log("Login successful:", loginResponse); // Debug log
-
-        const tokenResponse = await msalInstance.acquireTokenSilent({
-          scopes: ["Files.Read", "Sites.Read.All"],
-          account: loginResponse.account
-        });
-        
-        console.log("Token acquired:", tokenResponse.accessToken ? "Yes" : "No"); // Debug log
-
-        const accessToken = tokenResponse.accessToken;
-
-        // Call the function to load data from OneDrive
-        await loadDataFromOneDrive(accessToken);
-        
-        // Update button text to show refresh option
-        updateSignInButtonText(BUTTON_TEXT.REFRESH);
-        
-      } catch (error) {
-        console.error("Error during sign-in:", error);
-        
-        // More detailed error logging
-        if (error.errorCode) {
-          console.error("Error code:", error.errorCode);
-          console.error("Error message:", error.errorMessage);
+        if (!globalAuth.isAuthenticated) {
+          // If not authenticated globally, redirect to global sign-in
+          await globalSignIn();
+          return;
+        } else {
+          // Refresh data - user already authenticated globally
+          updateSignInButtonText('Refreshing Data...');
+          
+          // Ensure we have a fresh token
+          const tokenRequest = {
+            scopes: ['Files.Read', 'Files.Read.All', 'Sites.Read.All'],
+            account: globalAuth.account
+          };
+          
+          const tokenResponse = await msalInstance.acquireTokenSilent(tokenRequest);
+          globalAuth.accessToken = tokenResponse.accessToken;
+          
+          // Call the function to load data from OneDrive
+          await loadDataFromOneDrive(globalAuth.accessToken);
+          
+          // Update button text to show refresh option
+          updateSignInButtonText(BUTTON_TEXT.REFRESH);
         }
         
-        alert(`Error during sign-in: ${error.message || error.errorMessage || error}`);
+      } catch (error) {
+        console.error("Error in signIn:", error);
+        alert("Error: " + error.message);
+        updateSignInButtonText(BUTTON_TEXT.SIGN_IN);
+        
+        // If token is invalid, clear global auth
+        if (error.message.includes('token') || error.message.includes('auth')) {
+          globalAuth.isAuthenticated = false;
+          updateHeaderUI();
+          localStorage.removeItem(AUTH_STATE_KEY);
+        }
       } finally {
         document.body.style.cursor = 'default';
+      }
+    }
+
+    // New function to load data using global authentication
+    async function loadDataWithGlobalAuth() {
+      try {
+        if (!globalAuth.isAuthenticated || !globalAuth.accessToken) {
+          throw new Error('Global authentication required');
+        }
+        
+        // Call the existing function to load data from OneDrive
+        await loadDataFromOneDrive(globalAuth.accessToken);
+        
+      } catch (error) {
+        console.error("Error loading data with global auth:", error);
+        throw error;
       }
     }
 
@@ -308,7 +634,14 @@
       try {
         // 🎯 CONFIGURATION: Update these values for colleague's file access
         const FILEOWNER_EMAIL = "bkoya@evoketechnologies.com"; // Your colleague's email
-        const FILE_NAME = "Export Data Interface System.xlsx"; // The file name in colleague's OneDrive
+        const FILE_NAME = "EDIS 8 for DB.xlsm"; // The file name in colleague's OneDrive
+        
+        // Also try alternative file names and extensions
+        const ALTERNATIVE_FILE_NAMES = [
+          "EDIS 8 for DB.xlsm",
+          "EDIS 8 for DB.xlsx", 
+          "EDIS 8 for DB.xls",
+        ];
         
         console.log(`Searching for file: ${FILE_NAME}`);
         
@@ -321,7 +654,6 @@
           if (userInfoResponse.ok) {
             const userInfo = await userInfoResponse.json();
             currentUserEmail = userInfo.mail || userInfo.userPrincipalName;
-            console.log("Current user email:", currentUserEmail);
           }
         } catch (error) {
           console.log("Could not get current user info:", error.message);
@@ -329,14 +661,11 @@
         
         // Determine if current user is the file owner
         const isFileOwner = currentUserEmail && currentUserEmail.toLowerCase() === FILEOWNER_EMAIL.toLowerCase();
-        console.log("Is current user the file owner?", isFileOwner);
         
         if (isFileOwner) {
-          console.log("Current user is the file owner - searching in their own drive first");
           
           // Method 3: Search in current user's drive (for file owner)
           try {
-            console.log("Searching in current user's drive");
             const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${FILE_NAME}')`;
             const searchResponse = await fetch(searchUrl, {
               headers: { Authorization: `Bearer ${accessToken}` }
@@ -349,7 +678,6 @@
               );
               
               if (file) {
-                console.log("Found file in current user's drive:", file.name);
                 const fileUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${file.id}/content`;
                 const fileResponse = await fetch(fileUrl, {
                   headers: { Authorization: `Bearer ${accessToken}` }
@@ -357,7 +685,6 @@
                 
                 if (fileResponse.ok) {
                   const arrayBuffer = await fileResponse.arrayBuffer();
-                  console.log("File fetched successfully from file owner's drive, size:", arrayBuffer.byteLength);
                   await processFileData(arrayBuffer);
                   return;
                 }
@@ -367,12 +694,9 @@
             console.log("File owner's drive search failed:", error.message);
           }
         } else {
-          console.log("Current user is NOT the file owner - searching in shared items first");
-          
           // Method 2: Search in shared items - for users who received the file
           try {
             const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
-            console.log("Fetching shared items from:", sharedItemsUrl);
             
             const sharedResponse = await fetch(sharedItemsUrl, {
               headers: { Authorization: `Bearer ${accessToken}` }
@@ -380,15 +704,22 @@
             
             if (sharedResponse.ok) {
               const sharedData = await sharedResponse.json();
-              console.log("Shared items found:", sharedData.value?.length || 0);
-              console.log("All shared items:", sharedData.value?.map(item => item.name));
               
-              const targetFile = sharedData.value?.find(item => 
-                item.name === FILE_NAME && item.file
-              );
+              // Try to find file with any of the alternative names
+              let targetFile = null;
+              let matchedFileName = null;
+              
+              for (const fileName of ALTERNATIVE_FILE_NAMES) {
+                targetFile = sharedData.value?.find(item => 
+                  item.name === fileName && item.file
+                );
+                if (targetFile) {
+                  matchedFileName = fileName;
+                  break;
+                }
+              }
               
               if (targetFile) {
-                console.log("Found target file in shared items:", targetFile.name);
                 const fileContentUrl = `https://graph.microsoft.com/v1.0/drives/${targetFile.remoteItem.parentReference.driveId}/items/${targetFile.remoteItem.id}/content`;
                 
                 const fileResponse = await fetch(fileContentUrl, {
@@ -397,14 +728,11 @@
                 
                 if (fileResponse.ok) {
                   const arrayBuffer = await fileResponse.arrayBuffer();
-                  console.log("File fetched successfully via shared items, size:", arrayBuffer.byteLength);
                   await processFileData(arrayBuffer);
                   return;
                 } else {
                   console.error("Failed to fetch file content:", fileResponse.status, fileResponse.statusText);
                 }
-              } else {
-                console.log("File not found in shared items. Available files:", sharedData.value?.map(item => item.name));
               }
             } else {
               console.error("Failed to fetch shared items:", sharedResponse.status, sharedResponse.statusText);
@@ -415,7 +743,6 @@
           
           // Fallback: Try searching in current user's drive (maybe they have a copy)
           try {
-            console.log("Fallback: Trying to search in current user's drive for a copy");
             const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${FILE_NAME}')`;
             const searchResponse = await fetch(searchUrl, {
               headers: { Authorization: `Bearer ${accessToken}` }
@@ -428,7 +755,6 @@
               );
               
               if (file) {
-                console.log("Found file copy in current user's drive:", file.name);
                 const fileUrl = `https://graph.Microsoft.com/v1.0/me/drive/items/${file.id}/content`;
                 const fileResponse = await fetch(fileUrl, {
                   headers: { Authorization: `Bearer ${accessToken}` }
@@ -436,7 +762,6 @@
                 
                 if (fileResponse.ok) {
                   const arrayBuffer = await fileResponse.arrayBuffer();
-                  console.log("File fetched successfully from current user's drive copy, size:", arrayBuffer.byteLength);
                   await processFileData(arrayBuffer);
                   return;
                 }
@@ -459,14 +784,25 @@
     // Helper function to process file data
     async function processFileData(arrayBuffer) {
       try {
-        // Use SheetJS to parse Excel - same as handleFileUpload
+        // Use SheetJS to parse Excel - read from specific EXPORT_SALES sheet
         const workbook = XLSX.read(arrayBuffer, { type: "array", cellDates: false });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Look for EXPORT_SALES sheet specifically
+        let targetSheetName = 'EXPORT_SALES';
+        if (!workbook.SheetNames.includes(targetSheetName)) {
+          // Try alternative sheet names if exact match not found
+          const alternativeNames = ['Export_Sales', 'export_sales', 'Export Sales', 'EXPORT SALES'];
+          targetSheetName = alternativeNames.find(name => workbook.SheetNames.includes(name));
+          
+          if (!targetSheetName) {
+            targetSheetName = workbook.SheetNames[0];
+          }
+        }
+        
+        const worksheet = workbook.Sheets[targetSheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true, defval: '' });
 
         // Process the data using the same logic as handleFileUpload
-        console.log("Raw Excel data first row:", jsonData[0]); // Debug log
         processExcelData(jsonData);
         
       } catch (error) {
@@ -496,7 +832,7 @@
                     updateSignInButtonText(BUTTON_TEXT.REFRESH);
                     
                 } catch (error) {
-                    console.log("Silent token acquisition failed, user needs to sign in again");
+                    // Silent token acquisition failed, user needs to sign in again
                 }
             }
         } catch (error) {
@@ -527,14 +863,46 @@
 
     function getFinancialYear(date) { if (!(date instanceof Date) || isNaN(date)) return null; const year = date.getFullYear(); const month = date.getMonth(); return month < 3 ? year - 1 : year; }
     function initializeCharts() { const chartTextColor='#9CA3AF';const chartGridColor='#4B5563';const invoiceCtx=document.getElementById('invoiceChart')?.getContext('2d');const activeCtx=document.getElementById('activeClientsChart')?.getContext('2d');const subsCtx=document.getElementById('subsidiariesChart')?.getContext('2d');if(invoiceChart)invoiceChart.destroy();if(activeClientsChart)activeClientsChart.destroy();if(subsidiariesChart)subsidiariesChart.destroy();const commonChartOptions={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{color:chartTextColor},grid:{color:chartGridColor,borderColor:chartGridColor}},x:{ticks:{color:chartTextColor},grid:{color:chartGridColor,borderColor:chartGridColor}}}};if(invoiceCtx){invoiceChart=new Chart(invoiceCtx,{type:'bar',data:{labels:['Invoices','Softex','BRC'],datasets:[{label:'Count',data:[0,0,0],backgroundColor:['#4FD1C5','#63B3ED','#F6E05E']}]},options:{...commonChartOptions,onClick:(event,elements)=>{if(elements.length>0){const clickedIndex=elements[0].index;const label=invoiceChart.data.labels[clickedIndex];handleInvoiceChartBarClick(label);}}}});} if(activeCtx){let activeChartOptions=JSON.parse(JSON.stringify(commonChartOptions));activeChartOptions.indexAxis='y';activeChartOptions.scales.x.ticks.stepSize=1;activeClientsChart=new Chart(activeCtx,{type:'bar',data:{labels:['Total Clients (Historical)','Active Clients (Period)'],datasets:[{label:'Client Count',data:[0,0],backgroundColor:['#63B3ED','#4FD1C5'],borderColor:['#63B3ED','#4FD1C5'],borderWidth:1}]},options:activeChartOptions});} if(subsCtx){subsidiariesChart=new Chart(subsCtx,{type:'doughnut',data:{labels:[],datasets:[{label:'Subsidiary Sales',data:[],backgroundColor:['#4FD1C5', '#63B3ED', '#F6E05E', '#F56565', '#B794F4', '#ED8936'],borderColor:'#263138',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:chartTextColor}}}}});}}
-    function formatCurrency(value, digits = 0) { const num = Number(value); if (isNaN(num)) return '$0'; const absValue = Math.abs(num); if (absValue >= 1000000) { return (num < 0 ? '-' : '') + '$' + (absValue / 1000000).toFixed(1) + 'M'; } else if (absValue >= 1000) { return (num < 0 ? '-' : '') + '$' + (absValue / 1000).toFixed(0) + 'K'; } return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits }).format(num);	}
+    function formatCurrency(value, digits = 0) { 
+        // Handle null, undefined, or empty values
+        if (value == null || value === '') return '$0';
+        
+        const num = Number(value); 
+        if (isNaN(num)) {
+            // Try to clean the value first if it's a string
+            if (typeof value === 'string') {
+                const cleaned = value.replace(/[$,\s\u00A0]/g, '');
+                const cleanedNum = parseFloat(cleaned);
+                if (!isNaN(cleanedNum)) {
+                    return formatCurrency(cleanedNum, digits);
+                }
+            }
+            return '$0'; // Return $0 instead of throwing error
+        }
+        
+        const absValue = Math.abs(num); 
+        if (absValue >= 1000000) { 
+            return (num < 0 ? '-' : '') + '$' + (absValue / 1000000).toFixed(1) + 'M'; 
+        } else if (absValue >= 1000) { 
+            return (num < 0 ? '-' : '') + '$' + (absValue / 1000).toFixed(0) + 'K'; 
+        } 
+        return new Intl.NumberFormat('en-US', { 
+            style: 'currency', 
+            currency: 'USD', 
+            minimumFractionDigits: digits, 
+            maximumFractionDigits: digits 
+        }).format(num);
+    }
     function formatPercentage(current, previous) { if (previous === 0 || previous == null || isNaN(previous)) { return current > 0 ? "+100%" : (current < 0 ? "-100%" : "0%"); } if (current == null || isNaN(current)) current = 0; const percentageChange = ((current - previous) / previous) * 100; const sign = percentageChange > 0 ? '+' : (percentageChange < 0 ? '' : ''); return `${sign}${percentageChange.toFixed(1)}%`; }
     function cleanCurrency(value) { if (typeof value === 'number') return value; if (value === null || value === undefined) return 0; let stringValue = String(value).trim(); if (stringValue === '' || stringValue === '-') return 0; const cleaned = stringValue.replace(/[$,\s\u00A0]/g, ''); const num = parseFloat(cleaned); if (isNaN(num)) { return 0; } return num;    }
     
     // Simplified updateTable function, no longer handles special cases
     function updateTable(tableBodyId, dataRows, columnConfigs = [], noDataMessage = 'No data available for this selection.') {
         const tbody = document.getElementById(tableBodyId);
-        if (!tbody) { console.warn(`Table body with ID '${tableBodyId}' not found.`); return; }
+        if (!tbody) { 
+            console.warn(`Table body with ID '${tableBodyId}' not found.`); 
+            return; 
+        }
         tbody.innerHTML = '';
         if (dataRows && dataRows.length > 0) {
             dataRows.forEach(rowData => {
@@ -545,8 +913,17 @@
                     let formattedData = cellData != null ? String(cellData) : '';
                     const config = columnConfigs[index] || {};
                     if (config.formatter) {
-                        try { formattedData = config.formatter(cellData, rowData); }
-                        catch (formatError) { console.error(`Format Error for cellData "${cellData}" with formatter index ${index}: ${formatError}`); formattedData = 'Error'; }
+                        try { 
+                            formattedData = config.formatter(cellData, rowData); 
+                        }
+                        catch (formatError) { 
+                            // Instead of showing "Error", try to display the raw value or a fallback
+                            if (cellData != null && cellData !== '') {
+                                formattedData = String(cellData); // Show raw value
+                            } else {
+                                formattedData = '$0'; // Show $0 for currency fields
+                            }
+                        }
                     }
                     if (config.className) { td.className = config.className; }
                     td.textContent = formattedData;
@@ -572,7 +949,26 @@
     
     // Extract data processing logic to be reused by both file upload and Microsoft Graph API
     function processExcelData(jsonData) {
-        console.log("Processing Excel data, rows:", jsonData.length); // Debug log
+        
+        // Log all available column names from first row for debugging
+        if (jsonData.length > 0) {
+            const firstRowKeys = Object.keys(jsonData[0]).map(key => key.trim());
+            
+            // Check which expected columns are missing
+            const missingColumns = [];
+            const foundColumns = [];
+            for (const [key, expectedCol] of Object.entries(EXPECTED_COLUMNS)) {
+                if (!firstRowKeys.includes(expectedCol)) {
+                    missingColumns.push(`${key}: '${expectedCol}'`);
+                } else {
+                    foundColumns.push(`${key}: '${expectedCol}'`);
+                }
+            }
+            
+            if (missingColumns.length > 0) {
+                console.warn("Missing columns:", missingColumns);
+            }
+        }
         
         financialYears.clear();
         const cleanedData = [];
@@ -588,13 +984,12 @@
             
             // Log first few rows for debugging
             if (index < 3) {
-                console.log(`Row ${index} keys:`, Object.keys(rowWithTrimmedKeys));
+                // Debug logging for first few rows
             }
             
             const cleanedRow = {};
             cleanedRow.jsDate = parseDateValue(rowWithTrimmedKeys[EXPECTED_COLUMNS.DATE]);
             if (!cleanedRow.jsDate) {
-                if (index < 5) console.log(`Row ${index} skipped: no valid date`);
                 return;
             }
             
@@ -631,9 +1026,6 @@
         
         allFinancialData = cleanedData;
         
-        console.log("Processed data:", cleanedData.length, "rows"); // Debug log
-        console.log("Financial years found:", Array.from(financialYears)); // Debug log
-        
         if(allFinancialData.length === 0){
             alert("No valid data rows were found or parsed. Please check the Excel file format and column headers.");
         }
@@ -653,8 +1045,20 @@
             try { 
                 const data = new Uint8Array(e.target.result); 
                 const workbook = XLSX.read(data, { type: 'array', cellDates: false }); 
-                const firstSheetName = workbook.SheetNames[0]; 
-                const worksheet = workbook.Sheets[firstSheetName]; 
+                
+                // Look for EXPORT_SALES sheet specifically
+                let targetSheetName = 'EXPORT_SALES';
+                if (!workbook.SheetNames.includes(targetSheetName)) {
+                  // Try alternative sheet names if exact match not found
+                  const alternativeNames = ['Export_Sales', 'export_sales', 'Export Sales', 'EXPORT SALES'];
+                  targetSheetName = alternativeNames.find(name => workbook.SheetNames.includes(name));
+                  
+                  if (!targetSheetName) {
+                    targetSheetName = workbook.SheetNames[0];
+                  }
+                }
+                
+                const worksheet = workbook.Sheets[targetSheetName]; 
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true, defval: '' }); 
                 
                 // Use the extracted processing function
@@ -873,7 +1277,11 @@
     }
 
     function updateDashboardUI(metrics) { 
-        const updateText = (id, value) => { const elem = document.getElementById(id); if (elem) elem.innerText = value; else console.warn(`Element with ID '${id}' not found.`); }; 
+        const updateText = (id, value) => { 
+            const elem = document.getElementById(id); 
+            if (elem) elem.innerText = value; 
+            else console.warn(`Element with ID '${id}' not found.`); 
+        }; 
         updateText('totalSalesYear', formatCurrency(metrics.totalSalesYear)); 
         const salesVsYearElem = document.getElementById('salesVsLastYear'); 
         if (salesVsYearElem) { const percentChangeFY = formatPercentage(metrics.totalSalesYear, metrics.previousFyTotalSales); salesVsYearElem.innerHTML = `${metrics.salesVsLastYearAmount >= 0 ? '▲' : '▼'} ${formatCurrency(Math.abs(metrics.salesVsLastYearAmount))} (${percentChangeFY}) vs last FY`; salesVsYearElem.className = metrics.salesVsLastYearAmount >= 0 ? 'highlight' : 'down'; } 
@@ -943,6 +1351,9 @@
         
         refreshDashboard();
         
+        // Try to restore global authentication state and auto-load data
+        tryRestoreGlobalAuthForDashboard();
+        
         // Initialize the app and try to load data automatically
         initializeApp();
     });
@@ -950,6 +1361,61 @@
     document.getElementById('file-upload')?.addEventListener('change', handleFileUpload);
     document.getElementById('year')?.addEventListener('change', refreshDashboard);
     document.getElementById('month')?.addEventListener('change', refreshDashboard);
+
+    // Try to restore global authentication state and auto-load dashboard data
+    async function tryRestoreGlobalAuthForDashboard() {
+      try {
+        // Load saved authentication state
+        const savedAuthState = loadAuthState();
+        
+        if (savedAuthState) {
+          console.log('Attempting to restore authentication state for dashboard...');
+          
+          // Check if user is still authenticated in MSAL
+          const accounts = msalInstance.getAllAccounts();
+          const savedAccount = accounts.find(acc => acc.homeAccountId === savedAuthState.accountId);
+          
+          if (savedAccount) {
+            console.log('Found matching MSAL account, attempting silent token acquisition...');
+            
+            // Try to get token silently
+            const tokenRequest = {
+              scopes: ['Files.Read', 'Files.Read.All', 'Sites.Read.All'],
+              account: savedAccount
+            };
+            
+            const tokenResponse = await msalInstance.acquireTokenSilent(tokenRequest);
+            
+            // Restore global auth state
+            globalAuth.isAuthenticated = true;
+            globalAuth.accessToken = tokenResponse.accessToken;
+            globalAuth.account = savedAccount;
+            globalAuth.userName = savedAuthState.userName;
+            
+            // Update UI
+            updateHeaderUI();
+            
+            // Auto-load dashboard data
+            await loadDashboardData();
+            
+            console.log('Dashboard authentication state restored successfully');
+            return;
+          }
+        }
+        
+        // No valid authentication state found
+        console.log('No valid authentication state found for dashboard, showing initial state');
+        updateHeaderUI();
+        
+      } catch (error) {
+        console.log('Failed to restore authentication state for dashboard:', error.message);
+        
+        // Clear invalid state and show initial UI
+        localStorage.removeItem(AUTH_STATE_KEY);
+        globalAuth.isAuthenticated = false;
+        updateHeaderUI();
+      }
+    }
   </script>
 </body>
 </html>

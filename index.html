@@ -65,14 +65,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
       margin: 0;
       height: 70px;
     }
 
     .brand-logo {
       width: 100%;
-      height: 50px;
+      height: 84px;
       object-fit: contain;
       margin: 0;
       padding: 10px;
@@ -370,6 +369,10 @@
         <i class="fas fa-chart-pie nav-icon"></i>
         <span class="nav-text">Export Sales</span>
       </div>
+       <div class="nav-item" data-page="Softex_BRC" onclick="loadPage('Softex_BRC')">
+        <i class="fas fa-shield-alt nav-icon"></i>
+        <span class="nav-text">Softex_BRC</span>
+      </div>
       <div class="nav-item" data-page="P&L" onclick="loadPage('PandL')">
         <i class="fas fa-chart-line nav-icon"></i>
         <span class="nav-text">P&L</span>
@@ -390,7 +393,7 @@
           <i class="fas fa-building nav-icon"></i>
           <span class="nav-text">Branch</span>
         </div>
-        <div class="nav-subitem" data-page="subsidiaries" onclick="loadPage('subsidiaries')">
+        <div class="nav-subitem" data-page="subsidiaries" onclick="loadPage('OR_subsidiaries')">
           <i class="fas fa-network-wired nav-icon"></i>
           <span class="nav-text">Subsidiaries</span>
         </div>
@@ -407,16 +410,26 @@
           <i class="fas fa-building nav-icon"></i>
           <span class="nav-text">Evoke Technologies</span>
         </div>
-        <div class="nav-subitem" data-page="write-off" onclick="loadPage('write-off')">
-          <i class="fas fa-minus-circle nav-icon"></i>
-          <span class="nav-text">Write-Off</span>
+         <div class="nav-subitem" data-page="subsidiaries" onclick="loadPage('SH_subsidiaries')">
+          <i class="fas fa-network-wired nav-icon"></i>
+          <span class="nav-text">Subsidiaries</span>
         </div>
       </div>
       
+      <div class="nav-item" data-page="write-off" onclick="loadPage('write-off')">
+          <i class="fas fa-minus-circle nav-icon"></i>
+          <span class="nav-text">Write-Off</span>
+        </div>
+
       <div class="nav-item" data-page="imports" onclick="loadPage('imports')">
         <i class="fas fa-ship nav-icon"></i>
         <span class="nav-text">Imports</span>
       </div>
+
+      <div class="nav-item" data-page="Documents-archive" onclick="loadPage('Documents-archive')">
+          <i class="fas fa-archive nav-icon"></i>
+          <span class="nav-text">Documents Archive</span>
+        </div>
     </div>
   </nav>
 
@@ -432,10 +445,7 @@
       </div>
       
       <div class="header-actions">
-        <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">
-          <i class="fas fa-user"></i>
-          <span style="margin-left: 5px;">Dashboard Portal</span>
-        </div>
+        <span style="color: rgba(255, 255, 255, 0.9); font-size: 16px; font-weight: 500;">Dashboard Portal</span>
       </div>
     </header>
 
@@ -563,6 +573,9 @@
         case 'Export sales':
           pageTitle.textContent = 'Export Sales Dashboard';
           break;
+        case 'Softex_BRC':
+          pageTitle.textContent = 'Softex BRC Dashboard';
+          break;
         case 'P&L':
           pageTitle.textContent = 'P&L Dashboard';
           break;
@@ -604,11 +617,13 @@
       // Load the appropriate page
       if (pageId === 'finance-dashboard') {
         contentFrame.src = 'dashboard.html';
+      } 
+      else if (pageId === 'Softex_BRC') {
+        contentFrame.src = 'softex-brc.html';
       } else {
         // For other pages, you can create specific HTML files or handle them as needed
         contentFrame.src = 'dashboard.html'; // Default for now
       }
-      
       console.log(`Loading page: ${pageId}`);
     }
 
@@ -627,8 +642,9 @@
     // Initialize navigation when page loads
     document.addEventListener('DOMContentLoaded', () => {
       initializeNavigation();
-      console.log('Layout initialized with Finance Dashboard');
+      console.log('Finance Dashboard Layout initialized');
     });
+  </script>
   </script>
 </body>
 </html>
