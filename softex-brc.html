@@ -8,6 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Centralized Configuration -->
+    <script src="config.js"></script>
     <style>
         * {
             margin: 0;
@@ -306,7 +308,9 @@
                     <i class="fas fa-sign-out-alt"></i>
                     Sign Out
                 </button>
-                <button onclick="getData()" class="upload-btn">Get Data</button>
+                <button onclick="getData()" class="upload-btn">
+                    Get Data
+                </button>
             </div>
         </div>
     </div>
@@ -321,18 +325,8 @@
     </div>
 
     <script>
-        // Microsoft Graph API configuration
-        const msalConfig = {
-      auth: {
-        clientId: "57343fc8-1f4e-40ab-87f4-3f86782b469a", 
-        authority: "https://login.microsoftonline.com/e1c5d9ee-a951-451e-8432-642c23d40071", 
-        redirectUri: window.location.origin + window.location.pathname // Use current page URL
-      },
-      cache: {
-        cacheLocation: "localStorage", // Enable localStorage for better token management
-        storeAuthStateInCookie: false
-      }
-    };
+        // Microsoft Graph API configuration - Use centralized config
+        const msalConfig = window.FinanceDashboardConfig.msalConfig;
 
         const graphConfig = {
             graphMeEndpoint: 'https://graph.microsoft.com/v1.0/me',
@@ -344,8 +338,11 @@
 
         let chartInstances = [];
         let currentData = null;
-        const targetFileName = 'EDIS 8 for DB.xlsm';
-        const targetSheetName = 'Softex_Brc';
+        
+        // Use centralized configuration
+        const config = window.FinanceDashboardConfig;
+        const targetFileName = config.getPrimaryFileName();
+        const targetSheetName = config.getSheetName('softexBrc');
 
         // Global authentication variables
         let globalAuth = {
@@ -355,16 +352,11 @@
             userName: null
         };
 
-        // Authentication state key for localStorage
-        const AUTH_STATE_KEY = 'finance_dashboard_auth_state';
+        // Authentication state key for localStorage - Use centralized config
+        const AUTH_STATE_KEY = config.authConfig.stateKey;
 
-        // Button text constants
-        const BUTTON_TEXT = {
-            GET_DATA: 'Get Data',
-            REFRESH: 'Refresh',
-            SIGNING_IN: 'Signing in...',
-            LOADING_DATA: 'Loading Data...'
-        };
+        // Button text constants - Use centralized config
+        const BUTTON_TEXT = config.buttonText;
 
         // Global sign-in function
         async function globalSignIn() {
@@ -511,7 +503,13 @@
         function updateButtonText(text) {
             const button = document.querySelector('.upload-btn');
             if (button) {
-                button.textContent = text;
+                if (text === BUTTON_TEXT.LOADING_DATA) {
+                    button.innerHTML = '<div class="loading-spinner"></div>' + text;
+                } else if (text === BUTTON_TEXT.REFRESH) {
+                    button.innerHTML = '<i class="fas fa-sync-alt"></i>' + text;
+                } else {
+                    button.innerHTML = text;
+                }
             }
         }
 
@@ -543,7 +541,13 @@
         function updateButtonText(text) {
             const button = document.querySelector('.upload-btn');
             if (button) {
-                button.textContent = text;
+                if (text === BUTTON_TEXT.LOADING_DATA) {
+                    button.innerHTML = '<div class="loading-spinner"></div>' + text;
+                } else if (text === BUTTON_TEXT.REFRESH) {
+                    button.innerHTML = '<i class="fas fa-sync-alt"></i>' + text;
+                } else {
+                    button.innerHTML = text;
+                }
             }
         }
 
@@ -666,168 +670,66 @@
             };
 
             try {
-                // Configuration: Update these values for colleague's file access
-                const FILEOWNER_EMAIL = "bkoya@evoketechnologies.com"; // Your colleague's email who shared the file
+                console.log(`Searching for file: ${fileName}`);
                 
-                // First, let's determine the best approach based on user context
-                let currentUserEmail = null;
+                // Method 1: Search in shared items first (works for most users)
                 try {
-                    const userInfoResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
-                        headers: { Authorization: `Bearer ${accessToken}` }
-                    });
-                    if (userInfoResponse.ok) {
-                        const userInfo = await userInfoResponse.json();
-                        currentUserEmail = userInfo.mail || userInfo.userPrincipalName;
-                        console.log("Current user email:", currentUserEmail);
+                    const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
+                    console.log("Searching in shared items...");
+                    
+                    const sharedResponse = await fetch(sharedItemsUrl, { headers });
+                    
+                    if (sharedResponse.ok) {
+                        const sharedData = await sharedResponse.json();
+                        console.log("Shared items found:", sharedData.value?.length || 0);
+                        
+                        // Try exact match first
+                        let targetFile = sharedData.value?.find(item => 
+                            item.name === fileName && item.file
+                        );
+                        
+                        // If exact match fails, try case-insensitive match
+                        if (!targetFile) {
+                            targetFile = sharedData.value?.find(item => 
+                                item.name?.toLowerCase() === fileName.toLowerCase() && item.file
+                            );
+                        }
+                        
+                        if (targetFile) {
+                            console.log("Found file in shared items:", targetFile.name);
+                            return await processExcelFileFromSharedDrive(accessToken, targetFile, sheetName);
+                        }
                     }
                 } catch (error) {
-                    console.log("Could not get current user info:", error.message);
+                    console.log("Shared items search failed:", error.message);
                 }
                 
-                // Determine if current user is the file owner
-                const isFileOwner = currentUserEmail && currentUserEmail.toLowerCase() === FILEOWNER_EMAIL.toLowerCase();
-                
-                if (isFileOwner) {
-                    console.log("Current user is the file owner - searching in their own drive first");
+                // Method 2: Search in current user's drive (works for file owners or if user has a copy)
+                try {
+                    console.log("Searching in current user's drive...");
+                    const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${fileName}')`;
+                    const searchResponse = await fetch(searchUrl, { headers });
                     
-                    // Method 1: Search in current user's drive (for file owner)
-                    try {
-                        console.log("Searching in current user's drive");
-                        const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${fileName}')`;
-                        const searchResponse = await fetch(searchUrl, { headers });
+                    if (searchResponse.ok) {
+                        const searchResults = await searchResponse.json();
+                        console.log("Search results:", searchResults.value?.length || 0);
                         
-                        if (searchResponse.ok) {
-                            const searchResults = await searchResponse.json();
-                            const file = searchResults.value?.find(item => 
-                                item.name === fileName && item.file
-                            );
-                            
-                            if (file) {
-                                console.log("Found file in current user's drive:", file.name);
-                                return await processExcelFileFromDrive(accessToken, file.id, sheetName);
-                            }
+                        const file = searchResults.value?.find(item => 
+                            item.name === fileName && item.file
+                        );
+                        
+                        if (file) {
+                            console.log("Found file in user's drive:", file.name);
+                            return await processExcelFileFromDrive(accessToken, file.id, sheetName);
                         }
-                    } catch (error) {
-                        console.log("File owner's drive search failed:", error.message);
                     }
-                } else {
-                    console.log("Current user is NOT the file owner - searching in shared items first");
-                    
-                    // Method 2: Search in shared items - for users who received the file
-                    try {
-                        const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
-                        console.log("Fetching shared items from:", sharedItemsUrl);
-                        
-                        const sharedResponse = await fetch(sharedItemsUrl, { headers });
-                        
-                        if (sharedResponse.ok) {
-                            const sharedData = await sharedResponse.json();
-                            console.log("Shared items found:", sharedData.value?.length || 0);
-                            console.log("All shared items names:", sharedData.value?.map(item => `"${item.name}"`));
-                            console.log("Target file name we're looking for:", `"${fileName}"`);
-                            
-                            // Log detailed info about each shared item
-                            sharedData.value?.forEach((item, index) => {
-                                console.log(`Shared item ${index + 1}:`, {
-                                    name: item.name,
-                                    nameMatch: item.name === fileName,
-                                    isFile: !!item.file,
-                                    type: item.file ? 'file' : 'folder'
-                                });
-                            });
-                            
-                            // Try exact match first
-                            let targetFile = sharedData.value?.find(item => 
-                                item.name === fileName && item.file
-                            );
-                            
-                            // If exact match fails, try case-insensitive match
-                            if (!targetFile) {
-                                console.log("Exact match failed, trying case-insensitive match");
-                                targetFile = sharedData.value?.find(item => 
-                                    item.name?.toLowerCase() === fileName.toLowerCase() && item.file
-                                );
-                            }
-                            
-                            // If still no match, try partial match
-                            // if (!targetFile) {
-                            //     console.log("Case-insensitive match failed, trying partial match");
-                            //     targetFile = sharedData.value?.find(item => 
-                            //         item.name?.includes("EDIS") && item.name?.includes("DB") && item.file
-                            //     );
-                            // }
-                            
-                            if (targetFile) {
-                                console.log("Found target file in shared items:", targetFile.name);
-                                console.log("Target file details:", targetFile);
-                                return await processExcelFileFromSharedDrive(accessToken, targetFile, sheetName);
-                            } else {
-                                console.log("File not found in shared items.");
-                                console.log("Available file names:", sharedData.value?.filter(item => item.file).map(item => item.name));
-                            }
-                        } else {
-                            console.error("Failed to fetch shared items:", sharedResponse.status, sharedResponse.statusText);
-                            const errorText = await sharedResponse.text();
-                            console.error("Error response:", errorText);
-                        }
-                    } catch (error) {
-                        console.error("Shared items method failed:", error);
-                    }
-                    
-                    // Fallback: Try searching in current user's drive (maybe they have a copy)
-                    try {
-                        console.log("Fallback: Trying to search in current user's drive for a copy");
-                        const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${fileName}')`;
-                        const searchResponse = await fetch(searchUrl, { headers });
-                        
-                        if (searchResponse.ok) {
-                            const searchResults = await searchResponse.json();
-                            console.log("Search results in user's drive:", searchResults.value?.length || 0);
-                            console.log("Files found in search:", searchResults.value?.map(item => item.name));
-                            
-                            const file = searchResults.value?.find(item => 
-                                item.name === fileName && item.file
-                            );
-                            
-                            if (file) {
-                                console.log("Found file copy in current user's drive:", file.name);
-                                return await processExcelFileFromDrive(accessToken, file.id, sheetName);
-                            }
-                        }
-                    } catch (error) {
-                        console.log("Current user drive search failed:", error.message);
-                    }
-                    
-                    // Additional fallback: Try different search approaches
-                    try {
-                        console.log("Additional fallback: Searching for files with partial name match");
-                        const partialSearchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='EDIS DB')`;
-                        const partialSearchResponse = await fetch(partialSearchUrl, { headers });
-                        
-                        if (partialSearchResponse.ok) {
-                            const partialResults = await partialSearchResponse.json();
-                            console.log("Partial search results:", partialResults.value?.length || 0);
-                            console.log("Files found in partial search:", partialResults.value?.map(item => item.name));
-                            
-                            const partialFile = partialResults.value?.find(item => 
-                                item.name?.includes("EDIS") && item.name?.includes("DB") && item.file
-                            );
-                            
-                            if (partialFile) {
-                                console.log("Found file via partial search:", partialFile.name);
-                                return await processExcelFileFromDrive(accessToken, partialFile.id, sheetName);
-                            }
-                        }
-                    } catch (error) {
-                        console.log("Partial search failed:", error.message);
-                    }
+                } catch (error) {
+                    console.log("User drive search failed:", error.message);
                 }
                 
-                // If all methods fail, provide detailed error message
-                const errorMsg = `File not found. Please check:\n\n1. File exists in colleague's OneDrive\n2. File is shared with your account\n3. You have appropriate permissions\n4. File name is exactly correct\n\nTIP: Check browser console (F12) for detailed logs about what files were found.`;
-                
+                // If all methods fail
                 showStatus('error', 'File not found. Check console for details.');
-                throw new Error(errorMsg);
+                throw new Error('File not found in OneDrive or shared items');
                 
             } catch (error) {
                 console.error('Error finding/loading Excel file:', error);

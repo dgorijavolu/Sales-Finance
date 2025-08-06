@@ -14,13 +14,14 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
 
   <!--  MSAL.js for authentication Microsoft Graph API -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>   
   
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">   
   
-  <style>
+  <!-- Centralized Configuration -->
+  <script src="config.js"></script>  <style>
     /* Header styles */
     .top-header {
       position: fixed;
@@ -559,17 +560,8 @@
   }
 
   //Using Microsoft Graph API to read Excel files from OneDrive requires authentication
-    const msalConfig = {
-      auth: {
-        clientId: "57343fc8-1f4e-40ab-87f4-3f86782b469a", 
-        authority: "https://login.microsoftonline.com/e1c5d9ee-a951-451e-8432-642c23d40071", 
-        redirectUri: window.location.origin + window.location.pathname // Use current page URL
-      },
-      cache: {
-        cacheLocation: "localStorage", // Enable localStorage for better token management
-        storeAuthStateInCookie: false
-      }
-    };
+    // Use centralized configuration
+    const msalConfig = window.FinanceDashboardConfig.msalConfig;
     const msalInstance = new msal.PublicClientApplication(msalConfig);
 
     async function signIn() {
@@ -632,16 +624,11 @@
 
     async function loadDataFromOneDrive(accessToken) {
       try {
-        // 🎯 CONFIGURATION: Update these values for colleague's file access
-        const FILEOWNER_EMAIL = "bkoya@evoketechnologies.com"; // Your colleague's email
-        const FILE_NAME = "EDIS 8 for DB.xlsm"; // The file name in colleague's OneDrive
-        
-        // Also try alternative file names and extensions
-        const ALTERNATIVE_FILE_NAMES = [
-          "EDIS 8 for DB.xlsm",
-          "EDIS 8 for DB.xlsx", 
-          "EDIS 8 for DB.xls",
-        ];
+        // Use centralized configuration
+        const config = window.FinanceDashboardConfig;
+        const FILEOWNER_EMAIL = config.getOwnerEmail();
+        const FILE_NAME = config.getPrimaryFileName();
+        const ALTERNATIVE_FILE_NAMES = config.getFileSearchNames();
         
         console.log(`Searching for file: ${FILE_NAME}`);
         
@@ -704,18 +691,41 @@
             
             if (sharedResponse.ok) {
               const sharedData = await sharedResponse.json();
+              console.log("Shared items found:", sharedData.value?.length || 0);
+              
+              // Log first few shared file names for debugging
+              if (sharedData.value && sharedData.value.length > 0) {
+                console.log("First 10 shared files:", sharedData.value.slice(0, 10).map(item => item.name));
+              }
               
               // Try to find file with any of the alternative names
               let targetFile = null;
               let matchedFileName = null;
               
               for (const fileName of ALTERNATIVE_FILE_NAMES) {
+                console.log(`Looking for: ${fileName}`);
                 targetFile = sharedData.value?.find(item => 
                   item.name === fileName && item.file
                 );
                 if (targetFile) {
                   matchedFileName = fileName;
+                  console.log(`Found file: ${fileName}`);
                   break;
+                }
+              }
+              
+              // If exact match fails, try case-insensitive search
+              if (!targetFile) {
+                console.log("Exact match failed, trying case-insensitive search...");
+                for (const fileName of ALTERNATIVE_FILE_NAMES) {
+                  targetFile = sharedData.value?.find(item => 
+                    item.name?.toLowerCase() === fileName.toLowerCase() && item.file
+                  );
+                  if (targetFile) {
+                    matchedFileName = fileName;
+                    console.log(`Found file (case-insensitive): ${targetFile.name}`);
+                    break;
+                  }
                 }
               }
               
@@ -773,7 +783,8 @@
         }
         
         // If all methods fail
-        throw new Error(`File '${FILE_NAME}' not found. Please ensure:\n1. File exists in ${FILEOWNER_EMAIL}'s OneDrive\n2. File is shared with your account\n3. You have appropriate permissions\n4. File name is correct`);
+        console.log(`File search failed. Searched for: ${ALTERNATIVE_FILE_NAMES.join(', ')}`);
+        throw new Error(`File '${FILE_NAME}' not found. Please ensure:\n1. File exists in ${FILEOWNER_EMAIL}'s OneDrive\n2. File is shared with your account\n3. You have appropriate permissions\n4. File name is correct\n\nSearched for: ${ALTERNATIVE_FILE_NAMES.join(', ')}\n\nCheck browser console for detailed logs.`);
         
       } catch (error) {
         console.error("Error loading data:", error);
@@ -787,8 +798,10 @@
         // Use SheetJS to parse Excel - read from specific EXPORT_SALES sheet
         const workbook = XLSX.read(arrayBuffer, { type: "array", cellDates: false });
         
-        // Look for EXPORT_SALES sheet specifically
-        let targetSheetName = 'EXPORT_SALES';
+        // Use centralized configuration for sheet name
+        const config = window.FinanceDashboardConfig;
+        let targetSheetName = config.getSheetName('dashboard');
+        
         if (!workbook.SheetNames.includes(targetSheetName)) {
           // Try alternative sheet names if exact match not found
           const alternativeNames = ['Export_Sales', 'export_sales', 'Export Sales', 'EXPORT SALES'];

@@ -389,7 +389,7 @@
         <i class="fas fa-chevron-right expand-arrow"></i>
       </div>
       <div class="nav-submenu" id="outward-remittance-submenu">
-        <div class="nav-subitem" data-page="branch" onclick="loadPage('branch')">
+        <div class="nav-subitem" data-page="branch" onclick="loadPage('OR_branch')">
           <i class="fas fa-building nav-icon"></i>
           <span class="nav-text">Branch</span>
         </div>
@@ -416,7 +416,7 @@
         </div>
       </div>
       
-      <div class="nav-item" data-page="write-off" onclick="loadPage('write-off')">
+      <div class="nav-item" data-page="write-off" onclick="loadPage('Write-off')">
           <i class="fas fa-minus-circle nav-icon"></i>
           <span class="nav-text">Write-Off</span>
         </div>
@@ -583,10 +583,10 @@
           pageTitle.textContent = 'IRM Dashboard';
           break;
         case 'branch':
-          pageTitle.textContent = 'Branch Dashboard';
+          pageTitle.textContent = 'Outward Remittance Branch Details';
           break;
         case 'subsidiaries':
-          pageTitle.textContent = 'Subsidiaries Dashboard';
+          pageTitle.textContent = 'Outward Remittance Subsidiaries Details';
           break;
         case 'share-holding':
           pageTitle.textContent = 'Share Holding Dashboard';
@@ -595,10 +595,13 @@
           pageTitle.textContent = 'Evoke Technologies Dashboard';
           break;
         case 'write-off':
-          pageTitle.textContent = 'Write-Off Dashboard';
+          pageTitle.textContent = 'Write-Off Details';
           break;
         case 'imports':
           pageTitle.textContent = 'Imports Dashboard';
+          break;
+          case 'Documents':
+          pageTitle.textContent = 'Documents';
           break;
         default:
           pageTitle.textContent = 'Finance Dashboard';
@@ -620,7 +623,19 @@
       } 
       else if (pageId === 'Softex_BRC') {
         contentFrame.src = 'softex-brc.html';
-      } else {
+      } 
+      else if (pageId === 'Write-off') {
+        contentFrame.src = 'write-off.html';
+      }
+      else if (pageId === 'OR_branch') {
+        contentFrame.src = 'or_branch.html';
+      }
+       else if (pageId === 'OR_subsidiaries') {
+        contentFrame.src = 'or_subsidiaries.html';
+      }
+      else if (pageId === 'IRM') {
+        contentFrame.src = 'irm.html';
+      }else {
         // For other pages, you can create specific HTML files or handle them as needed
         contentFrame.src = 'dashboard.html'; // Default for now
       }

@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outward Remittance Branch</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+  <!-- SheetJS (for Excel parsing) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+
+  <!--  MSAL.js for authentication Microsoft Graph API -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>   
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">   
+  
+  <!-- Centralized Configuration -->
+  <script src="config.js"></script>
+  
+  <style>
+    /* Header styles */
+    .top-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      padding: 5px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FFFFFF;
+      font-size: 14px;
+    }
+
+    .user-info i {
+      color: #f39c12;
+    }
+
+    .sign-in-btn, .sign-out-btn {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+
+    .sign-in-btn:hover, .sign-out-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+    }
+
+    .sign-out-btn {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    }
+
+    .sign-out-btn:hover {
+      background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+      box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+    }
+
+    .upload-btn {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+    }
+
+    .upload-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Main content styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #2c3e50;
+      color: #FFFFFF;
+      min-height: 100vh;
+      margin: 0;
+      padding-top: 45px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Status message */
+    .status-message {
+      text-align: center;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 500;
+      display: none;
+    }
+
+    .status-loading {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: white;
+    }
+
+    .status-success {
+      background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+      color: white;
+    }
+
+    .status-error {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: white;
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+      backdrop-filter: blur(15px);
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .summary-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .summary-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .summary-card-icon {
+      font-size: 24px;
+      padding: 12px;
+      border-radius: 10px;
+      color: white;
+    }
+
+    .summary-card-icon.remittance {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    }
+
+    .summary-card-icon.branch {
+      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    }
+
+    .summary-card-icon.amount {
+      background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    }
+
+    .summary-card-icon.count {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    .summary-card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #BDC3C7;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-card-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-top: 8px;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chart-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 20px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .chart-title i {
+      color: #e74c3c;
+      font-size: 26px;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 400px;
+      margin-bottom: 20px;
+    }
+
+    /* Data Table */
+    .data-table-container {
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 20px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .table-title i {
+      color: #e74c3c;
+      font-size: 26px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .data-table th {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: #FFFFFF;
+      padding: 15px 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .data-table td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: #FFFFFF;
+      font-size: 14px;
+    }
+
+    .data-table tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .data-table tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .summary-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-wrapper {
+        height: 300px;
+      }
+
+      .data-table {
+        font-size: 12px;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 8px 6px;
+      }
+    }
+
+    /* Loading animation */
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Initial message */
+    .initial-message {
+      text-align: center;
+      padding: 60px 20px;
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.9) 0%, rgba(52, 73, 94, 0.9) 100%);
+      border-radius: 20px;
+      margin: 0 0 30px 0;
+      border: 2px dashed rgba(231, 76, 60, 0.3);
+    }
+
+    .initial-message i {
+      font-size: 64px;
+      color: #e74c3c;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .initial-message h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: #FFFFFF;
+    }
+
+    .initial-message p {
+      font-size: 16px;
+      color: #BDC3C7;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Top Header with Sign In -->
+  <div class="top-header">
+    <div class="header-left">
+      <!-- Title removed to match other pages -->
+    </div>
+    <div class="header-right">
+      <div id="userInfo" class="user-info" style="display: none;">
+        <i class="fas fa-user"></i>
+        <span id="userName">User</span>
+      </div>
+      <button id="signOutBtn" class="sign-out-btn" onclick="globalSignOut()" style="display: none;">
+        <i class="fas fa-sign-out-alt"></i>
+        Sign Out
+      </button>
+      <button class="upload-btn" onclick="getData()">
+        Get Data
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Status Message -->
+    <div id="statusMessage" class="status-message"></div>
+
+    <!-- Initial Message -->
+    <div id="initialMessage" class="initial-message">
+      <i class="fas fa-money-bill-transfer"></i>
+      <h2>Outward Remittance Branch</h2>
+      <p>Click "Get Data" to load outward remittance information from the OR Branch sheet.<br>
+         This details will display branch-wise remittance data with analytics and detailed table view.</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div id="summaryCards" class="summary-cards" style="display: none;">
+      <div class="summary-card">
+        <div class="summary-card-header">
+          <div class="summary-card-icon remittance">
+            <i class="fas fa-money-bill-wave"></i>
+          </div>
+          <div class="summary-card-title">Salaries</div>
+        </div>
+        <div id="salariesTotal" class="summary-card-value">$0</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-card-header">
+          <div class="summary-card-icon branch">
+            <i class="fas fa-cogs"></i>
+          </div>
+          <div class="summary-card-title">OM (Operations & Maintenance)</div>
+        </div>
+        <div id="omTotal" class="summary-card-value">$0</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-card-header">
+          <div class="summary-card-icon amount">
+            <i class="fas fa-dollar-sign"></i>
+          </div>
+          <div class="summary-card-title">Total Amount</div>
+        </div>
+        <div id="totalAmount" class="summary-card-value">$0</div>
+      </div>
+    </div>
+
+    <!-- Chart Container -->
+    <div id="chartContainer" class="chart-container" style="display: none;">
+      <div class="chart-title">
+        <i class="fas fa-chart-bar"></i>
+        Branch-wise Remittance Analysis
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="remittanceChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div id="tableContainer" class="data-table-container" style="display: none;">
+      <div class="table-title">
+        <i class="fas fa-table"></i>
+        Outward Remittance Branch Details
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr id="tableHeaders">
+              <!-- Headers will be populated dynamically -->
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Data will be populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Access centralized configuration
+    const GlobalConfig = window.FinanceDashboardConfig;
+
+    // MSAL Configuration from centralized config
+    const msalConfig = GlobalConfig.getMsalConfig();
+
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    // Global authentication variables - Same as other pages
+    let globalAuth = {
+      isAuthenticated: false,
+      accessToken: null,
+      account: null,
+      userName: null
+    };
+
+    // Authentication state key from config
+    const AUTH_STATE_KEY = GlobalConfig.getAuthConfig().authStateKey;
+
+    // Configuration from centralized config
+    const fileConfig = GlobalConfig.getFileConfig();
+    const TARGET_FILE_NAME = fileConfig.fileName;
+    const ALTERNATIVE_FILE_NAMES = fileConfig.alternativeNames;
+    const TARGET_SHEET_NAME = GlobalConfig.getSheetName('orBranch');
+    const FILEOWNER_EMAIL = fileConfig.fileOwnerEmail;
+
+    // Button text constants from config
+    const BUTTON_TEXT = GlobalConfig.getButtonText();
+
+    // Chart instance
+    let remittanceChart = null;
+    let currentData = null;
+
+    // Global sign-in function - Same as other pages
+    async function globalSignIn() {
+      try {
+        updateButtonText(BUTTON_TEXT.SIGNING_IN);
+        showStatus('loading', 'Signing in...');
+        
+        const loginRequest = {
+          scopes: ['User.Read', 'Files.Read', 'Files.Read.All', 'Sites.Read.All']
+        };
+        
+        const response = await msalInstance.loginPopup(loginRequest);
+        
+        // Get access token
+        const tokenRequest = {
+          scopes: ['Files.Read', 'Files.Read.All', 'Sites.Read.All'],
+          account: response.account
+        };
+        const tokenResponse = await msalInstance.acquireTokenSilent(tokenRequest);
+        
+        // Update global auth state
+        globalAuth.isAuthenticated = true;
+        globalAuth.accessToken = tokenResponse.accessToken;
+        globalAuth.account = response.account;
+        globalAuth.userName = response.account.name || response.account.username;
+        
+        // Save authentication state
+        saveAuthState();
+        
+        // Update UI
+        updateHeaderUI();
+        
+        // Load data
+        await loadRemittanceData();
+        
+        showStatus('success', 'Signed in successfully! Data loaded.');
+        
+      } catch (error) {
+        console.error('Sign-in failed:', error);
+        showStatus('error', 'Sign-in failed: ' + error.message);
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+      }
+    }
+
+    // Global sign-out function - Same as other pages
+    async function globalSignOut() {
+      try {
+        showStatus('loading', 'Signing out...');
+        
+        // Clear MSAL cache
+        await msalInstance.logoutPopup();
+        
+        // Clear global auth state
+        globalAuth.isAuthenticated = false;
+        globalAuth.accessToken = null;
+        globalAuth.account = null;
+        globalAuth.userName = null;
+        
+        // Clear localStorage
+        localStorage.removeItem(AUTH_STATE_KEY);
+        
+        // Update UI
+        updateHeaderUI();
+        
+        // Clear data and reset UI
+        currentData = null;
+        showInitialMessage();
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+        
+        showStatus('success', 'Signed out successfully.');
+        
+      } catch (error) {
+        console.error('Sign-out failed:', error);
+        showStatus('error', 'Sign-out failed: ' + error.message);
+      }
+    }
+
+    // Save authentication state to localStorage
+    function saveAuthState() {
+      const authState = {
+        isAuthenticated: globalAuth.isAuthenticated,
+        userName: globalAuth.userName,
+        accountId: globalAuth.account?.homeAccountId,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(AUTH_STATE_KEY, JSON.stringify(authState));
+    }
+
+    // Load authentication state from localStorage
+    function loadAuthState() {
+      try {
+        const saved = localStorage.getItem(AUTH_STATE_KEY);
+        if (saved) {
+          const authState = JSON.parse(saved);
+          
+          // Check if not expired (24 hours)
+          const isExpired = (Date.now() - authState.timestamp) > (24 * 60 * 60 * 1000);
+          
+          if (!isExpired && authState.isAuthenticated) {
+            return authState;
+          } else {
+            localStorage.removeItem(AUTH_STATE_KEY);
+          }
+        }
+      } catch (error) {
+        localStorage.removeItem(AUTH_STATE_KEY);
+      }
+      return null;
+    }
+
+    // Update header UI based on authentication state
+    function updateHeaderUI() {
+      const signOutBtn = document.getElementById('signOutBtn');
+      const userInfo = document.getElementById('userInfo');
+      const userName = document.getElementById('userName');
+      
+      if (globalAuth.isAuthenticated) {
+        signOutBtn.style.display = 'block';
+        userInfo.style.display = 'flex';
+        userName.textContent = globalAuth.userName || 'User';
+      } else {
+        signOutBtn.style.display = 'none';
+        userInfo.style.display = 'none';
+      }
+    }
+
+    // Main data loading function
+    async function getData() {
+      try {
+        if (!globalAuth.isAuthenticated) {
+          await globalSignIn();
+        } else {
+          await loadRemittanceData();
+        }
+      } catch (error) {
+        console.error('Error in getData:', error);
+        showStatus('error', 'Failed to get data: ' + error.message);
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+      }
+    }
+
+    // Load remittance data
+    async function loadRemittanceData() {
+      try {
+        if (!globalAuth.isAuthenticated || !globalAuth.accessToken) {
+          throw new Error('Not authenticated');
+        }
+        
+        updateButtonText(BUTTON_TEXT.LOADING_DATA);
+        showStatus('loading', 'Loading outward remittance data...');
+        
+        const fileData = await findAndLoadExcelFile(globalAuth.accessToken, TARGET_FILE_NAME, TARGET_SHEET_NAME);
+        
+        if (fileData) {
+          currentData = fileData;
+          processAndDisplayRemittanceData(fileData);
+          showStatus('success', 'Outward remittance data loaded successfully');
+          updateButtonText(BUTTON_TEXT.REFRESH);
+        } else {
+          showStatus('error', 'Excel file not found in OneDrive');
+          updateButtonText(BUTTON_TEXT.GET_DATA);
+        }
+        
+      } catch (error) {
+        console.error('Error loading remittance data:', error);
+        showStatus('error', 'Failed to load remittance data: ' + error.message);
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+      }
+    }
+
+    // Find and load Excel file - Enhanced logic like other pages
+    async function findAndLoadExcelFile(accessToken, fileName, sheetName) {
+      const headers = {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      };
+
+      try {
+        console.log(`Searching for file: ${fileName}`);
+        
+        // Get current user info
+        let currentUserEmail = null;
+        try {
+          const userInfoResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          if (userInfoResponse.ok) {
+            const userInfo = await userInfoResponse.json();
+            currentUserEmail = userInfo.mail || userInfo.userPrincipalName;
+            console.log("Current user email:", currentUserEmail);
+          }
+        } catch (error) {
+          console.log("Could not get current user info:", error.message);
+        }
+        
+        // Determine if current user is the file owner
+        const isFileOwner = currentUserEmail && currentUserEmail.toLowerCase() === FILEOWNER_EMAIL.toLowerCase();
+        
+        if (isFileOwner) {
+          console.log("Current user is the file owner - searching in their own drive first");
+          
+          // Method 1: Search in current user's drive (for file owner)
+          try {
+            console.log("Searching in current user's drive");
+            const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${fileName}')`;
+            const searchResponse = await fetch(searchUrl, { headers });
+            
+            if (searchResponse.ok) {
+              const searchResults = await searchResponse.json();
+              const file = searchResults.value?.find(item => 
+                item.name === fileName && item.file
+              );
+              
+              if (file) {
+                console.log("Found file in current user's drive:", file.name);
+                return await processExcelFileFromDrive(accessToken, file.id, sheetName);
+              }
+            }
+          } catch (error) {
+            console.log("File owner's drive search failed:", error.message);
+          }
+        } else {
+          console.log("Current user is NOT the file owner - searching in shared items first");
+          
+          // Method 2: Search in shared items - for users who received the file
+          try {
+            const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
+            console.log("Fetching shared items from:", sharedItemsUrl);
+            
+            const sharedResponse = await fetch(sharedItemsUrl, { headers });
+            
+            if (sharedResponse.ok) {
+              const sharedData = await sharedResponse.json();
+              console.log("Shared items found:", sharedData.value?.length || 0);
+              console.log("All shared items names:", sharedData.value?.map(item => `"${item.name}"`));
+              
+              // Try to find file with any of the alternative names
+              let targetFile = null;
+              let matchedFileName = null;
+              
+              for (const altFileName of ALTERNATIVE_FILE_NAMES) {
+                console.log(`Looking for: "${altFileName}"`);
+                targetFile = sharedData.value?.find(item => 
+                  item.name === altFileName && item.file
+                );
+                if (targetFile) {
+                  matchedFileName = altFileName;
+                  console.log(`Found file with name: "${matchedFileName}"`);
+                  break;
+                }
+              }
+              
+              // If exact match fails, try case-insensitive match
+              if (!targetFile) {
+                console.log("Exact match failed, trying case-insensitive match");
+                for (const altFileName of ALTERNATIVE_FILE_NAMES) {
+                  targetFile = sharedData.value?.find(item => 
+                    item.name?.toLowerCase() === altFileName.toLowerCase() && item.file
+                  );
+                  if (targetFile) {
+                    matchedFileName = altFileName;
+                    console.log(`Found file with case-insensitive match: "${targetFile.name}"`);
+                    break;
+                  }
+                }
+              }
+              
+              // If still no match, try partial match
+              if (!targetFile) {
+                console.log("Case-insensitive match failed, trying partial match");
+                targetFile = sharedData.value?.find(item => 
+                  item.name?.includes("Sample") && item.name?.includes("Data") && item.file
+                );
+                if (targetFile) {
+                  console.log(`Found file with partial match: "${targetFile.name}"`);
+                }
+              }
+              
+              if (targetFile) {
+                console.log("Found target file in shared items:", targetFile.name);
+                return await processExcelFileFromSharedDrive(accessToken, targetFile, sheetName);
+              } else {
+                console.log("File not found in shared items.");
+                console.log("Available file names:", sharedData.value?.filter(item => item.file).map(item => item.name));
+              }
+            } else {
+              console.error("Failed to fetch shared items:", sharedResponse.status, sharedResponse.statusText);
+              const errorText = await sharedResponse.text();
+              console.error("Error response:", errorText);
+            }
+          } catch (error) {
+            console.error("Shared items method failed:", error);
+          }
+          
+          // Fallback: Try searching in current user's drive (maybe they have a copy)
+          try {
+            console.log("Fallback: Trying to search in current user's drive for a copy");
+            const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${fileName}')`;
+            const searchResponse = await fetch(searchUrl, { headers });
+            
+            if (searchResponse.ok) {
+              const searchResults = await searchResponse.json();
+              console.log("Search results in user's drive:", searchResults.value?.length || 0);
+              console.log("Files found in search:", searchResults.value?.map(item => item.name));
+              
+              const file = searchResults.value?.find(item => 
+                item.name === fileName && item.file
+              );
+              
+              if (file) {
+                console.log("Found file copy in current user's drive:", file.name);
+                return await processExcelFileFromDrive(accessToken, file.id, sheetName);
+              }
+            }
+          } catch (error) {
+            console.log("Current user drive search failed:", error.message);
+          }
+          
+          // Additional fallback: Try different search approaches
+          try {
+            console.log("Additional fallback: Searching for files with partial name match");
+            const partialSearchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='Sample Data')`;
+            const partialSearchResponse = await fetch(partialSearchUrl, { headers });
+            
+            if (partialSearchResponse.ok) {
+              const partialResults = await partialSearchResponse.json();
+              console.log("Partial search results:", partialResults.value?.length || 0);
+              console.log("Files found in partial search:", partialResults.value?.map(item => item.name));
+              
+              const partialFile = partialResults.value?.find(item => 
+                item.name?.includes("Sample") && item.name?.includes("Data") && item.file
+              );
+              
+              if (partialFile) {
+                console.log("Found file with partial search:", partialFile.name);
+                return await processExcelFileFromDrive(accessToken, partialFile.id, sheetName);
+              }
+            }
+          } catch (error) {
+            console.log("Partial search failed:", error.message);
+          }
+        }
+        
+        // If all methods fail, provide detailed error message
+        const errorMsg = `File not found. Please check:\n\n1. File exists in colleague's OneDrive\n2. File is shared with your account\n3. You have appropriate permissions\n4. File name is exactly correct\n\nTIP: Check browser console (F12) for detailed logs about what files were found.`;
+        
+        showStatus('error', 'File not found. Check console for details.');
+        throw new Error(errorMsg);
+        
+      } catch (error) {
+        console.error('Error finding/loading Excel file:', error);
+        return null;
+      }
+    }
+
+    // Process Excel file from drive
+    async function processExcelFileFromDrive(accessToken, fileId, sheetName) {
+      try {
+        const fileUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`;
+        const fileResponse = await fetch(fileUrl, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        
+        if (fileResponse.ok) {
+          const arrayBuffer = await fileResponse.arrayBuffer();
+          return processDownloadedExcelFile(arrayBuffer, sheetName);
+        }
+      } catch (error) {
+        console.error("File download failed:", error);
+      }
+      return null;
+    }
+
+    // Process Excel file from shared drive
+    async function processExcelFileFromSharedDrive(accessToken, targetFile, sheetName) {
+      try {
+        const fileContentUrl = `https://graph.microsoft.com/v1.0/drives/${targetFile.remoteItem.parentReference.driveId}/items/${targetFile.remoteItem.id}/content`;
+        const fileResponse = await fetch(fileContentUrl, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        
+        if (fileResponse.ok) {
+          const arrayBuffer = await fileResponse.arrayBuffer();
+          return processDownloadedExcelFile(arrayBuffer, sheetName);
+        }
+      } catch (error) {
+        console.error("Shared file download failed:", error);
+      }
+      return null;
+    }
+
+    // Process downloaded Excel file
+    function processDownloadedExcelFile(arrayBuffer, sheetName) {
+      try {
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        // Look for the specific sheet name
+        let worksheet;
+        if (workbook.SheetNames.includes(sheetName)) {
+          worksheet = workbook.Sheets[sheetName];
+        } else {
+          // Try case-insensitive search
+          const foundSheetName = workbook.SheetNames.find(name => 
+            name.toLowerCase() === sheetName.toLowerCase()
+          );
+          if (foundSheetName) {
+            worksheet = workbook.Sheets[foundSheetName];
+          } else {
+            throw new Error(`Sheet '${sheetName}' not found in the Excel file. Available sheets: ${workbook.SheetNames.join(', ')}`);
+          }
+        }
+        
+        // Convert to JSON
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true, defval: '' });
+        return jsonData;
+        
+      } catch (error) {
+        console.error("Error processing Excel file:", error);
+        throw error;
+      }
+    }
+
+    // Process and display remittance data
+    function processAndDisplayRemittanceData(data) {
+      if (!data || data.length === 0) {
+        showStatus('error', 'No data found in the OR Branch sheet');
+        return;
+      }
+
+      // Hide initial message and show containers
+      document.getElementById('initialMessage').style.display = 'none';
+      document.getElementById('summaryCards').style.display = 'grid';
+      document.getElementById('tableContainer').style.display = 'block';
+
+      // Update summary cards
+      updateSummaryCards(data);
+
+      // Create table
+      createRemittanceTable(data);
+    }
+
+    // Update summary cards
+    function updateSummaryCards(data) {
+      // Find relevant columns
+      const headers = Object.keys(data[0]);
+      
+      // Look for Salaries column
+      const salariesColumn = headers.find(h => 
+        h.toLowerCase().includes('salaries') || 
+        h.toLowerCase().includes('salary')
+      );
+      
+      // Look for OM column
+      const omColumn = headers.find(h => 
+        h.toLowerCase().includes('om') || 
+        h.toLowerCase().includes('operations') ||
+        h.toLowerCase().includes('maintenance')
+      );
+
+      // Calculate totals
+      let salariesTotal = 0;
+      let omTotal = 0;
+      let grandTotal = 0;
+
+      data.forEach(row => {
+        if (salariesColumn) {
+          const salaryValue = parseFloat(row[salariesColumn]) || 0;
+          salariesTotal += salaryValue;
+          grandTotal += salaryValue;
+        }
+        
+        if (omColumn) {
+          const omValue = parseFloat(row[omColumn]) || 0;
+          omTotal += omValue;
+          grandTotal += omValue;
+        }
+      });
+
+      // Update UI
+      document.getElementById('salariesTotal').textContent = '$' + salariesTotal.toLocaleString();
+      document.getElementById('omTotal').textContent = '$' + omTotal.toLocaleString();
+      document.getElementById('totalAmount').textContent = '$' + grandTotal.toLocaleString();
+    }
+
+    // Create remittance chart
+    function createRemittanceChart(data) {
+      const ctx = document.getElementById('remittanceChart').getContext('2d');
+      
+      // Destroy existing chart if it exists
+      if (remittanceChart) {
+        remittanceChart.destroy();
+      }
+
+      // Process data for chart
+      const chartData = processDataForChart(data);
+
+      remittanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: chartData.labels,
+          datasets: [{
+            label: 'Remittance Amount',
+            data: chartData.values,
+            backgroundColor: [
+              '#e74c3c', '#f39c12', '#f1c40f', '#27ae60', 
+              '#3498db', '#9b59b6', '#1abc9c', '#e67e22',
+              '#95a5a6', '#34495e', '#2ecc71', '#e67e22'
+            ],
+            borderColor: [
+              '#c0392b', '#d68910', '#d4ac0d', '#229954',
+              '#2980b9', '#8e44ad', '#16a085', '#ca6f1e',
+              '#7f8c8d', '#2c3e50', '#27ae60', '#d35400'
+            ],
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                color: '#FFFFFF',
+                font: {
+                  size: 14,
+                  weight: 'bold'
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#FFFFFF',
+              bodyColor: '#FFFFFF',
+              borderColor: '#e74c3c',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  return `${context.dataset.label}: $${context.parsed.y.toLocaleString()}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#FFFFFF',
+                callback: function(value) {
+                  return '$' + value.toLocaleString();
+                }
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)',
+                borderColor: 'rgba(255, 255, 255, 0.3)'
+              }
+            },
+            x: {
+              ticks: {
+                color: '#FFFFFF',
+                maxRotation: 45
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)',
+                borderColor: 'rgba(255, 255, 255, 0.3)'
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+    }
+
+    // Process data for chart
+    function processDataForChart(data) {
+      // Try to find branch and amount columns
+      const firstRow = data[0];
+      const columns = Object.keys(firstRow);
+      
+      // Look for branch column
+      const branchColumn = columns.find(col => 
+        col.toLowerCase().includes('branch') || 
+        col.toLowerCase().includes('location') ||
+        col.toLowerCase().includes('office')
+      ) || columns[0];
+
+      // Look for amount column
+      const amountColumn = columns.find(col => 
+        col.toLowerCase().includes('amount') || 
+        col.toLowerCase().includes('value') ||
+        col.toLowerCase().includes('remittance')
+      ) || columns.find(col => typeof firstRow[col] === 'number');
+
+      if (!branchColumn || !amountColumn) {
+        // If we can't find proper columns, create a simple count chart
+        return {
+          labels: ['Total Remittances'],
+          values: [data.length]
+        };
+      }
+
+      // Group data by branch and sum amounts
+      const groupedData = {};
+      data.forEach(row => {
+        const branch = String(row[branchColumn] || 'Unknown').trim();
+        const amount = parseFloat(row[amountColumn]) || 0;
+        
+        if (groupedData[branch]) {
+          groupedData[branch] += amount;
+        } else {
+          groupedData[branch] = amount;
+        }
+      });
+
+      return {
+        labels: Object.keys(groupedData),
+        values: Object.values(groupedData)
+      };
+    }
+
+    // Create remittance table
+    function createRemittanceTable(data) {
+      const tableHeaders = document.getElementById('tableHeaders');
+      const tableBody = document.getElementById('tableBody');
+      
+      // Clear existing content
+      tableHeaders.innerHTML = '';
+      tableBody.innerHTML = '';
+
+      if (data.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="100%" style="text-align: center; color: #BDC3C7;">No data available</td></tr>';
+        return;
+      }
+
+      // Create headers
+      const headers = Object.keys(data[0]);
+      headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        tableHeaders.appendChild(th);
+      });
+
+      // Create rows
+      data.slice(0, 100).forEach(row => { // Limit to first 100 rows for performance
+        const tr = document.createElement('tr');
+        headers.forEach(header => {
+          const td = document.createElement('td');
+          let value = row[header];
+          
+          // Format percentage values
+          if (typeof value === 'number' && (header.toLowerCase().includes('%') || header.toLowerCase().includes('percent'))) {
+            // Convert decimal to percentage and format
+            value = (value * 100).toFixed(2) + '%';
+          }
+          // Format currency values
+          else if (typeof value === 'number' && (header.toLowerCase().includes('amount') || header.toLowerCase().includes('value') || header.toLowerCase().includes('total') || header.toLowerCase().includes('salaries') || header.toLowerCase().includes('om'))) {
+            value = '$' + value.toLocaleString();
+          }
+          // Format other numbers with proper decimal places
+          else if (typeof value === 'number' && value !== 0) {
+            // Check if this might be a percentage based on the value range (between -10 and 10 could be percentage as decimal)
+            if (value > -10 && value < 10 && value !== Math.floor(value)) {
+              // This might be a percentage stored as decimal, format it
+              value = (value * 100).toFixed(2) + '%';
+            } else {
+              // Regular number formatting
+              value = value.toLocaleString();
+            }
+          }
+          
+          td.textContent = value || '-';
+          tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+      });
+
+      if (data.length > 100) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.setAttribute('colspan', headers.length);
+        td.style.textAlign = 'center';
+        td.style.color = '#BDC3C7';
+        td.style.fontStyle = 'italic';
+        td.textContent = `... and ${data.length - 100} more rows`;
+        tr.appendChild(td);
+        tableBody.appendChild(tr);
+      }
+    }
+
+    // Utility functions
+    function updateButtonText(text) {
+      const button = document.querySelector('.upload-btn');
+      if (button) {
+        if (text === BUTTON_TEXT.LOADING_DATA) {
+          button.innerHTML = '<div class="loading-spinner"></div>' + text;
+        } else if (text === BUTTON_TEXT.REFRESH) {
+          button.innerHTML = '<i class="fas fa-sync-alt"></i>' + text;
+        } else {
+          button.innerHTML = text;
+        }
+      }
+    }
+
+    function showStatus(type, message) {
+      const statusDiv = document.getElementById('statusMessage');
+      statusDiv.className = `status-message status-${type}`;
+      statusDiv.textContent = message;
+      statusDiv.style.display = 'block';
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        statusDiv.style.display = 'none';
+      }, 5000);
+    }
+
+    function showInitialMessage() {
+      document.getElementById('initialMessage').style.display = 'block';
+      document.getElementById('summaryCards').style.display = 'none';
+      document.getElementById('tableContainer').style.display = 'none';
+    }
+
+    // Try to restore authentication state on page load
+    async function tryRestoreGlobalAuth() {
+      try {
+        const savedAuthState = loadAuthState();
+        
+        if (savedAuthState) {
+          const accounts = msalInstance.getAllAccounts();
+          const savedAccount = accounts.find(acc => acc.homeAccountId === savedAuthState.accountId);
+          
+          if (savedAccount) {
+            const tokenRequest = {
+              scopes: ['Files.Read', 'Files.Read.All', 'Sites.Read.All'],
+              account: savedAccount
+            };
+            
+            const tokenResponse = await msalInstance.acquireTokenSilent(tokenRequest);
+            
+            globalAuth.isAuthenticated = true;
+            globalAuth.accessToken = tokenResponse.accessToken;
+            globalAuth.account = savedAccount;
+            globalAuth.userName = savedAuthState.userName;
+            
+            updateHeaderUI();
+            await loadRemittanceData();
+            return;
+          }
+        }
+        
+        showInitialMessage();
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+        updateHeaderUI();
+        
+      } catch (error) {
+        console.log('Failed to restore authentication state:', error.message);
+        localStorage.removeItem(AUTH_STATE_KEY);
+        globalAuth.isAuthenticated = false;
+        showInitialMessage();
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+        updateHeaderUI();
+      }
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+      tryRestoreGlobalAuth();
+    });
+  </script>
+</body>
+</html>

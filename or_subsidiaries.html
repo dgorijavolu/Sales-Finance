@@ -1,0 +1,2134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outward Remittance Subsidiaries</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+  <!-- SheetJS (for Excel parsing) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+
+  <!--  MSAL.js for authentication Microsoft Graph API -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>   
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">   
+  
+  <!-- Centralized Configuration -->
+  <script src="config.js"></script>
+  
+  <style>
+    /* Header styles */
+    .top-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      padding: 5px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FFFFFF;
+      font-size: 14px;
+    }
+
+    .user-info i {
+      color: #f39c12;
+    }
+
+    .sign-in-btn, .sign-out-btn {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+
+    .sign-in-btn:hover, .sign-out-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+    }
+
+    .sign-out-btn {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    }
+
+    .sign-out-btn:hover {
+      background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+      box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+    }
+
+    .upload-btn {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+    }
+
+    .upload-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Main content styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #2c3e50;
+      color: #FFFFFF;
+      min-height: 100vh;
+      margin: 0;
+      padding-top: 45px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Status message */
+    .status-message {
+      text-align: center;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 500;
+      display: none;
+    }
+
+    .status-loading {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: white;
+    }
+
+    .status-success {
+      background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+      color: white;
+    }
+
+    .status-error {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: white;
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+      backdrop-filter: blur(15px);
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .summary-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .summary-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .summary-card-icon {
+      font-size: 24px;
+      padding: 12px;
+      border-radius: 10px;
+      color: white;
+    }
+
+    .summary-card-icon.entities {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    .summary-card-icon.active {
+      background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
+    }
+
+    .summary-card-icon.amount {
+      background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    }
+
+    .summary-card-icon.average {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    .summary-card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #BDC3C7;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-card-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-top: 8px;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chart-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 20px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .chart-title i {
+      color: #3498db;
+      font-size: 26px;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 400px;
+      margin-bottom: 20px;
+    }
+
+    /* Data Table */
+    .data-table-container {
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 20px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .table-title i {
+      color: #3498db;
+      font-size: 26px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .data-table th {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: #FFFFFF;
+      padding: 15px 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .data-table td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: #FFFFFF;
+      font-size: 14px;
+    }
+
+    .data-table tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .data-table tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .summary-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-wrapper {
+        height: 300px;
+      }
+
+      .data-table {
+        font-size: 12px;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 8px 6px;
+      }
+    }
+
+    /* Loading animation */
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Initial message */
+    .initial-message {
+      text-align: center;
+      padding: 60px 20px;
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.9) 0%, rgba(52, 73, 94, 0.9) 100%);
+      border-radius: 20px;
+      margin: 0 0 30px 0;
+      border: 2px dashed rgba(52, 152, 219, 0.3);
+    }
+
+    .initial-message i {
+      font-size: 64px;
+      color: #3498db;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .initial-message h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: #FFFFFF;
+    }
+
+    .initial-message p {
+      font-size: 16px;
+      color: #BDC3C7;
+      line-height: 1.6;
+    }
+
+    /* Country Selector */
+    .country-selector {
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+      backdrop-filter: blur(15px);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .selector-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .uin-display {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: #FFFFFF;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .uin-display i {
+      color: #FFFFFF;
+      font-size: 16px;
+    }
+
+    .selector-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .selector-label i {
+      color: #3498db;
+      font-size: 18px;
+    }
+
+    .country-dropdown {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: #FFFFFF;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 200px;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+
+    .country-dropdown:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+    }
+
+    .country-dropdown:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+    }
+
+    .country-dropdown option {
+      background: #2c3e50;
+      color: #FFFFFF;
+      padding: 10px;
+    }
+
+    /* Three Grids Layout */
+    .grids-container {
+      display: block;
+      margin-bottom: 30px;
+    }
+
+    .grid-item {
+      background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+      backdrop-filter: blur(15px);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .grid-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 15px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .grid-title.uk {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    }
+
+    .grid-title.poland {
+      background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+    }
+
+    .grid-title.australia {
+      background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    }
+
+    .grid-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 12px;
+    }
+
+    .grid-table th {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: #FFFFFF;
+      padding: 8px 6px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .grid-table td {
+      padding: 6px 5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: #FFFFFF;
+      font-size: 11px;
+    }
+
+    .grid-table tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .grid-table tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .total-row {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+      font-weight: bold;
+    }
+
+    .total-row td {
+      color: #FFFFFF !important;
+      font-weight: 600;
+    }
+
+    @media (max-width: 1200px) {
+      .grids-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .grid-table {
+        font-size: 10px;
+      }
+      
+      .grid-table th,
+      .grid-table td {
+        padding: 4px 3px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Top Header with Sign In -->
+  <div class="top-header">
+    <div class="header-left">
+      <!-- Title removed to match other pages -->
+    </div>
+    <div class="header-right">
+      <div id="userInfo" class="user-info" style="display: none;">
+        <i class="fas fa-user"></i>
+        <span id="userName">User</span>
+      </div>
+      <button id="signOutBtn" class="sign-out-btn" onclick="globalSignOut()" style="display: none;">
+        <i class="fas fa-sign-out-alt"></i>
+        Sign Out
+      </button>
+      <button class="upload-btn" onclick="getData()">
+        Get Data
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Status Message -->
+    <div id="statusMessage" class="status-message"></div>
+
+    <!-- Initial Message -->
+    <div id="initialMessage" class="initial-message">
+      <i class="fas fa-sitemap"></i>
+      <h2>Outward Remittance Subsidiaries</h2>
+      <p>Click "Get Data" to load subsidiary entities information from the OR Entities sheet.<br>
+         Select a country to view all three country grids side by side with UIN information.</p>
+    </div>
+
+    <!-- Country Selection Dropdown -->
+    <div id="countrySelector" class="country-selector" style="display: none;">
+      <div class="selector-container">
+        <label for="countryDropdown" class="selector-label">
+          <i class="fas fa-globe"></i>
+          Select Country:
+        </label>
+        <select id="countryDropdown" class="country-dropdown" onchange="filterByCountry()">
+          <option value="">-- Select a Country --</option>
+          <option value="UK">United Kingdom</option>
+          <option value="Poland">Poland</option>
+          <option value="Australia">Australia</option>
+        </select>
+        <div id="uinDisplay" class="uin-display">
+          <i class="fas fa-id-card"></i>
+          <span id="uinValue">UIN: </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Three Grids Container -->
+    <div id="gridsContainer" class="grids-container" style="display: none;">
+      <!-- UK Grid -->
+      <div id="ukGrid" class="grid-item" style="display: none;">
+        <div class="grid-title uk">
+          <i class="fas fa-flag"></i>
+          UK - UIN: Loading...
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="grid-table" id="ukTable">
+            <thead>
+              <tr>
+                <!-- Headers will be populated dynamically -->
+              </tr>
+            </thead>
+            <tbody id="ukTableBody">
+              <!-- Data will be populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Poland Grid -->
+      <div id="polandGrid" class="grid-item" style="display: none;">
+        <div class="grid-title poland">
+          <i class="fas fa-flag"></i>
+          POLAND - UIN: Loading...
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="grid-table" id="polandTable">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>DATE</th>
+                <th>COUNTRY</th>
+                <th>ENTITY</th>
+                <th>EQUITY</th>
+                <th>DEBT IN £</th>
+                <th>DEBT IN $</th>
+              </tr>
+            </thead>
+            <tbody id="polandTableBody">
+              <!-- Data will be populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Australia Grid -->
+      <div id="australiaGrid" class="grid-item" style="display: none;">
+        <div class="grid-title australia">
+          <i class="fas fa-flag"></i>
+          AUSTRALIA - UIN: Loading...
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="grid-table" id="australiaTable">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>DATE</th>
+                <th>COUNTRY</th>
+                <th>ENTITY</th>
+                <th>EQUITY</th>
+                <th>DEBT IN £</th>
+                <th>DEBT IN $</th>
+              </tr>
+            </thead>
+            <tbody id="australiaTableBody">
+              <!-- Data will be populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div id="tableContainer" class="data-table-container" style="display: none;">
+      <div class="table-title">
+        <i class="fas fa-table"></i>
+        Subsidiary Entities Details
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr id="tableHeaders">
+              <!-- Headers will be populated dynamically -->
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Data will be populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Access centralized configuration
+    const GlobalConfig = window.FinanceDashboardConfig;
+
+    // MSAL Configuration from centralized config
+    const msalConfig = GlobalConfig.getMsalConfig();
+
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    // Global authentication variables - Same as other pages
+    let globalAuth = {
+      isAuthenticated: false,
+      accessToken: null,
+      account: null,
+      userName: null
+    };
+
+    // Authentication state key from config
+    const AUTH_STATE_KEY = GlobalConfig.getAuthConfig().authStateKey;
+
+    // Configuration from centralized config
+    const fileConfig = GlobalConfig.getFileConfig();
+    const TARGET_FILE_NAME = fileConfig.fileName;
+    const ALTERNATIVE_FILE_NAMES = fileConfig.alternativeNames;
+    const TARGET_SHEET_NAME = GlobalConfig.getSheetName('orSubsidiaries');
+    const FILEOWNER_EMAIL = fileConfig.fileOwnerEmail;
+
+    // Button text constants from config
+    const BUTTON_TEXT = GlobalConfig.getButtonText();
+
+    // Chart instance and data storage
+    let currentData = null;
+    let allCountriesData = null;
+    let dynamicUINMap = {}; // Will be populated from Excel data
+    let dynamicColumnMapping = {}; // Will store column mappings from Excel
+
+    // Default UIN mapping (fallback if not found in Excel)
+    const DEFAULT_UIN_MAP = {
+      'UK': 'HWAZ20235236',
+      'Poland': 'HWAZ20236072',
+      'Australia': 'HWAZ20231461'
+    };
+
+    // Global sign-in function - Same as other pages
+    async function globalSignIn() {
+      try {
+        updateButtonText(BUTTON_TEXT.SIGNING_IN);
+        showStatus('loading', 'Signing in...');
+        
+        const loginRequest = {
+          scopes: ['User.Read', 'Files.Read', 'Files.Read.All', 'Sites.Read.All']
+        };
+        
+        const response = await msalInstance.loginPopup(loginRequest);
+        
+        // Get access token
+        const tokenRequest = {
+          scopes: ['Files.Read', 'Files.Read.All', 'Sites.Read.All'],
+          account: response.account
+        };
+        const tokenResponse = await msalInstance.acquireTokenSilent(tokenRequest);
+        
+        // Update global auth state
+        globalAuth.isAuthenticated = true;
+        globalAuth.accessToken = tokenResponse.accessToken;
+        globalAuth.account = response.account;
+        globalAuth.userName = response.account.name || response.account.username;
+        
+        // Save authentication state
+        saveAuthState();
+        
+        // Update UI
+        updateHeaderUI();
+        
+        // Load data
+        await loadEntitiesData();
+        
+        showStatus('success', 'Signed in successfully! Data loaded.');
+        
+      } catch (error) {
+        console.error('Sign-in failed:', error);
+        showStatus('error', 'Sign-in failed: ' + error.message);
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+      }
+    }
+
+    // Global sign-out function - Same as other pages
+    async function globalSignOut() {
+      try {
+        showStatus('loading', 'Signing out...');
+        
+        // Clear MSAL cache
+        await msalInstance.logoutPopup();
+        
+        // Clear global auth state
+        globalAuth.isAuthenticated = false;
+        globalAuth.accessToken = null;
+        globalAuth.account = null;
+        globalAuth.userName = null;
+        
+        // Clear localStorage
+        localStorage.removeItem(AUTH_STATE_KEY);
+        
+        // Update UI
+        updateHeaderUI();
+        
+        // Clear data and reset UI
+        currentData = null;
+        showInitialMessage();
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+        
+        showStatus('success', 'Signed out successfully.');
+        
+      } catch (error) {
+        console.error('Sign-out failed:', error);
+        showStatus('error', 'Sign-out failed: ' + error.message);
+      }
+    }
+
+    // Save authentication state to localStorage
+    function saveAuthState() {
+      const authState = {
+        isAuthenticated: globalAuth.isAuthenticated,
+        userName: globalAuth.userName,
+        accountId: globalAuth.account?.homeAccountId,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(AUTH_STATE_KEY, JSON.stringify(authState));
+    }
+
+    // Load authentication state from localStorage
+    function loadAuthState() {
+      try {
+        const saved = localStorage.getItem(AUTH_STATE_KEY);
+        if (saved) {
+          const authState = JSON.parse(saved);
+          
+          // Check if not expired (24 hours)
+          const isExpired = (Date.now() - authState.timestamp) > (24 * 60 * 60 * 1000);
+          
+          if (!isExpired && authState.isAuthenticated) {
+            return authState;
+          } else {
+            localStorage.removeItem(AUTH_STATE_KEY);
+          }
+        }
+      } catch (error) {
+        localStorage.removeItem(AUTH_STATE_KEY);
+      }
+      return null;
+    }
+
+    // Update header UI based on authentication state
+    function updateHeaderUI() {
+      const signOutBtn = document.getElementById('signOutBtn');
+      const userInfo = document.getElementById('userInfo');
+      const userName = document.getElementById('userName');
+      
+      if (globalAuth.isAuthenticated) {
+        signOutBtn.style.display = 'block';
+        userInfo.style.display = 'flex';
+        userName.textContent = globalAuth.userName || 'User';
+      } else {
+        signOutBtn.style.display = 'none';
+        userInfo.style.display = 'none';
+      }
+    }
+
+    // Main data loading function
+    async function getData() {
+      try {
+        if (!globalAuth.isAuthenticated) {
+          await globalSignIn();
+        } else {
+          await loadEntitiesData();
+        }
+      } catch (error) {
+        console.error('Error in getData:', error);
+        showStatus('error', 'Failed to get data: ' + error.message);
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+      }
+    }
+
+    // Load entities data
+    async function loadEntitiesData() {
+      try {
+        if (!globalAuth.isAuthenticated || !globalAuth.accessToken) {
+          throw new Error('Not authenticated');
+        }
+        
+        // Clear old data before loading new data
+        currentData = null;
+        allCountriesData = null;
+        
+        updateButtonText(BUTTON_TEXT.LOADING_DATA);
+        showStatus('loading', 'Loading subsidiary entities data...');
+        
+        const fileData = await findAndLoadExcelFile(globalAuth.accessToken, TARGET_FILE_NAME, TARGET_SHEET_NAME);
+        
+        if (fileData) {
+          currentData = fileData;
+          processAndDisplayEntitiesData(fileData);
+          showStatus('success', 'Subsidiary entities data loaded successfully');
+          updateButtonText(BUTTON_TEXT.REFRESH);
+        } else {
+          showStatus('error', 'Excel file not found in OneDrive');
+          updateButtonText(BUTTON_TEXT.GET_DATA);
+        }
+        
+      } catch (error) {
+        console.error('Error loading entities data:', error);
+        showStatus('error', 'Failed to load entities data: ' + error.message);
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+      }
+    }
+
+    // Find and load Excel file - Enhanced logic like other pages
+    async function findAndLoadExcelFile(accessToken, fileName, sheetName) {
+      const headers = {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      };
+
+      try {
+        console.log(`Searching for file: ${fileName}`);
+        
+        // Get current user info
+        let currentUserEmail = null;
+        try {
+          const userInfoResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          if (userInfoResponse.ok) {
+            const userInfo = await userInfoResponse.json();
+            currentUserEmail = userInfo.mail || userInfo.userPrincipalName;
+            console.log("Current user email:", currentUserEmail);
+          }
+        } catch (error) {
+          console.log("Could not get current user info:", error.message);
+        }
+        
+        // Determine if current user is the file owner
+        const isFileOwner = currentUserEmail && currentUserEmail.toLowerCase() === FILEOWNER_EMAIL.toLowerCase();
+        
+        if (isFileOwner) {
+          console.log("Current user is the file owner - searching in their own drive first");
+          
+          // Method 1: Search in current user's drive (for file owner)
+          try {
+            console.log("Searching in current user's drive");
+            const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${fileName}')`;
+            const searchResponse = await fetch(searchUrl, { headers });
+            
+            if (searchResponse.ok) {
+              const searchResults = await searchResponse.json();
+              const file = searchResults.value?.find(item => 
+                item.name === fileName && item.file
+              );
+              
+              if (file) {
+                console.log("Found file in current user's drive:", file.name);
+                return await processExcelFileFromDrive(accessToken, file.id, sheetName);
+              }
+            }
+          } catch (error) {
+            console.log("File owner's drive search failed:", error.message);
+          }
+        } else {
+          console.log("Current user is NOT the file owner - searching in shared items first");
+          
+          // Method 2: Search in shared items - for users who received the file
+          try {
+            const sharedItemsUrl = `https://graph.microsoft.com/v1.0/me/drive/sharedWithMe`;
+            console.log("Fetching shared items from:", sharedItemsUrl);
+            
+            const sharedResponse = await fetch(sharedItemsUrl, { headers });
+            
+            if (sharedResponse.ok) {
+              const sharedData = await sharedResponse.json();
+              console.log("Shared items found:", sharedData.value?.length || 0);
+              console.log("All shared items names:", sharedData.value?.map(item => `"${item.name}"`));
+              
+              // Try to find file with any of the alternative names
+              let targetFile = null;
+              let matchedFileName = null;
+              
+              for (const altFileName of ALTERNATIVE_FILE_NAMES) {
+                console.log(`Looking for: "${altFileName}"`);
+                targetFile = sharedData.value?.find(item => 
+                  item.name === altFileName && item.file
+                );
+                if (targetFile) {
+                  matchedFileName = altFileName;
+                  console.log(`Found file with name: "${matchedFileName}"`);
+                  break;
+                }
+              }
+              
+              // If exact match fails, try case-insensitive match
+              if (!targetFile) {
+                console.log("Exact match failed, trying case-insensitive match");
+                for (const altFileName of ALTERNATIVE_FILE_NAMES) {
+                  targetFile = sharedData.value?.find(item => 
+                    item.name?.toLowerCase() === altFileName.toLowerCase() && item.file
+                  );
+                  if (targetFile) {
+                    matchedFileName = altFileName;
+                    console.log(`Found file with case-insensitive match: "${targetFile.name}"`);
+                    break;
+                  }
+                }
+              }
+              
+              // If still no match, try partial match
+              if (!targetFile) {
+                console.log("Case-insensitive match failed, trying partial match");
+                targetFile = sharedData.value?.find(item => 
+                  item.name?.includes("Sample") && item.name?.includes("Data") && item.file
+                );
+                if (targetFile) {
+                  console.log(`Found file with partial match: "${targetFile.name}"`);
+                }
+              }
+              
+              if (targetFile) {
+                console.log("Found target file in shared items:", targetFile.name);
+                return await processExcelFileFromSharedDrive(accessToken, targetFile, sheetName);
+              } else {
+                console.log("File not found in shared items.");
+                console.log("Available file names:", sharedData.value?.filter(item => item.file).map(item => item.name));
+              }
+            } else {
+              console.error("Failed to fetch shared items:", sharedResponse.status, sharedResponse.statusText);
+              const errorText = await sharedResponse.text();
+              console.error("Error response:", errorText);
+            }
+          } catch (error) {
+            console.error("Shared items method failed:", error);
+          }
+          
+          // Fallback: Try searching in current user's drive (maybe they have a copy)
+          try {
+            console.log("Fallback: Trying to search in current user's drive for a copy");
+            const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${fileName}')`;
+            const searchResponse = await fetch(searchUrl, { headers });
+            
+            if (searchResponse.ok) {
+              const searchResults = await searchResponse.json();
+              console.log("Search results in user's drive:", searchResults.value?.length || 0);
+              console.log("Files found in search:", searchResults.value?.map(item => item.name));
+              
+              const file = searchResults.value?.find(item => 
+                item.name === fileName && item.file
+              );
+              
+              if (file) {
+                console.log("Found file copy in current user's drive:", file.name);
+                return await processExcelFileFromDrive(accessToken, file.id, sheetName);
+              }
+            }
+          } catch (error) {
+            console.log("Current user drive search failed:", error.message);
+          }
+          
+          // Additional fallback: Try different search approaches
+          try {
+            console.log("Additional fallback: Searching for files with partial name match");
+            const partialSearchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='Sample Data')`;
+            const partialSearchResponse = await fetch(partialSearchUrl, { headers });
+            
+            if (partialSearchResponse.ok) {
+              const partialResults = await partialSearchResponse.json();
+              console.log("Partial search results:", partialResults.value?.length || 0);
+              console.log("Files found in partial search:", partialResults.value?.map(item => item.name));
+              
+              const partialFile = partialResults.value?.find(item => 
+                item.name?.includes("Sample") && item.name?.includes("Data") && item.file
+              );
+              
+              if (partialFile) {
+                console.log("Found file with partial search:", partialFile.name);
+                return await processExcelFileFromDrive(accessToken, partialFile.id, sheetName);
+              }
+            }
+          } catch (error) {
+            console.log("Partial search failed:", error.message);
+          }
+        }
+        
+        // If all methods fail, provide detailed error message
+        const errorMsg = `File not found. Please check:\n\n1. File exists in colleague's OneDrive\n2. File is shared with your account\n3. You have appropriate permissions\n4. File name is exactly correct\n\nTIP: Check browser console (F12) for detailed logs about what files were found.`;
+        
+        showStatus('error', 'File not found. Check console for details.');
+        throw new Error(errorMsg);
+        
+      } catch (error) {
+        console.error('Error finding/loading Excel file:', error);
+        return null;
+      }
+    }
+
+    // Process Excel file from drive
+    async function processExcelFileFromDrive(accessToken, fileId, sheetName) {
+      try {
+        const fileUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`;
+        const fileResponse = await fetch(fileUrl, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        
+        if (fileResponse.ok) {
+          const arrayBuffer = await fileResponse.arrayBuffer();
+          return processDownloadedExcelFile(arrayBuffer, sheetName);
+        }
+      } catch (error) {
+        console.error("File download failed:", error);
+      }
+      return null;
+    }
+
+    // Process Excel file from shared drive
+    async function processExcelFileFromSharedDrive(accessToken, targetFile, sheetName) {
+      try {
+        const fileContentUrl = `https://graph.microsoft.com/v1.0/drives/${targetFile.remoteItem.parentReference.driveId}/items/${targetFile.remoteItem.id}/content`;
+        const fileResponse = await fetch(fileContentUrl, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        
+        if (fileResponse.ok) {
+          const arrayBuffer = await fileResponse.arrayBuffer();
+          return processDownloadedExcelFile(arrayBuffer, sheetName);
+        }
+      } catch (error) {
+        console.error("Shared file download failed:", error);
+      }
+      return null;
+    }
+
+    // Process downloaded Excel file
+    function processDownloadedExcelFile(arrayBuffer, sheetName) {
+      try {
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        // Look for the specific sheet name
+        let worksheet;
+        if (workbook.SheetNames.includes(sheetName)) {
+          worksheet = workbook.Sheets[sheetName];
+        } else {
+          // Try case-insensitive search
+          const foundSheetName = workbook.SheetNames.find(name => 
+            name.toLowerCase() === sheetName.toLowerCase()
+          );
+          if (foundSheetName) {
+            worksheet = workbook.Sheets[foundSheetName];
+          } else {
+            throw new Error(`Sheet '${sheetName}' not found in the Excel file. Available sheets: ${workbook.SheetNames.join(', ')}`);
+          }
+        }
+        
+        // Convert to JSON
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true, defval: '' });
+        return jsonData;
+        
+      } catch (error) {
+        console.error("Error processing Excel file:", error);
+        throw error;
+      }
+    }
+
+    // Process and display entities data
+    function processAndDisplayEntitiesData(data) {
+      if (!data || data.length === 0) {
+        showStatus('error', 'No data found in the OR Entities sheet');
+        return;
+      }
+
+      console.log('Processing entities data:', data.length, 'records');
+      console.log('Sample data structure:', data[0]);
+      console.log('All column names:', Object.keys(data[0]));
+      
+      // Extract dynamic UIN mapping and column information from Excel data
+      extractDynamicMapping(data);
+      
+      // Store all data for country filtering
+      allCountriesData = data;
+
+      // Hide initial message and show country selector
+      document.getElementById('initialMessage').style.display = 'none';
+      document.getElementById('countrySelector').style.display = 'block';
+      document.getElementById('tableContainer').style.display = 'none';
+      document.getElementById('gridsContainer').style.display = 'none';
+
+      // Auto-select UK by default and trigger filtering
+      document.getElementById('countryDropdown').value = 'UK';
+      document.getElementById('uinDisplay').style.display = 'none';
+      filterByCountry();
+    }
+
+    // Extract dynamic mapping from Excel data
+    function extractDynamicMapping(data) {
+      console.log('Extracting dynamic mapping from Excel data...');
+      
+      // Reset mappings
+      dynamicUINMap = {};
+      dynamicColumnMapping = {};
+      
+      const headers = Object.keys(data[0]);
+      console.log('Available columns:', headers);
+      
+      // Log each column name for detailed debugging
+      headers.forEach((header, index) => {
+        console.log(`Column ${index}: "${header}"`);
+      });
+      
+      // Find UIN column
+      const uinColumn = headers.find(h => 
+        h.toLowerCase().includes('uin') ||
+        h.toLowerCase().includes('unique') ||
+        h.toLowerCase().includes('identifier') ||
+        h.toLowerCase().includes('id') ||
+        h.toLowerCase().includes('reference')
+      );
+      
+      // Find country column
+      const countryColumn = headers.find(h => 
+        h.toLowerCase().includes('country') ||
+        h.toLowerCase().includes('location') ||
+        h.toLowerCase().includes('region') ||
+        h.toLowerCase().includes('nation')
+      );
+      
+      console.log('UIN column found:', uinColumn);
+      console.log('Country column found:', countryColumn);
+      
+      // Extract UIN mapping from data
+      if (uinColumn && countryColumn) {
+        data.forEach(row => {
+          const country = String(row[countryColumn] || '').trim();
+          const uin = String(row[uinColumn] || '').trim();
+          
+          if (country && uin) {
+            // Normalize country names
+            let normalizedCountry = '';
+            const countryLower = country.toLowerCase();
+            
+            if (countryLower.includes('uk') || countryLower.includes('united kingdom') || countryLower.includes('britain')) {
+              normalizedCountry = 'UK';
+            } else if (countryLower.includes('poland')) {
+              normalizedCountry = 'Poland';
+            } else if (countryLower.includes('australia')) {
+              normalizedCountry = 'Australia';
+            }
+            
+            if (normalizedCountry && !dynamicUINMap[normalizedCountry]) {
+              dynamicUINMap[normalizedCountry] = uin;
+              console.log(`Found UIN for ${normalizedCountry}: ${uin}`);
+            }
+          }
+        });
+      }
+      
+      // Use default UINs for any missing countries
+      Object.keys(DEFAULT_UIN_MAP).forEach(country => {
+        if (!dynamicUINMap[country]) {
+          dynamicUINMap[country] = DEFAULT_UIN_MAP[country];
+          console.log(`Using default UIN for ${country}: ${DEFAULT_UIN_MAP[country]}`);
+        }
+      });
+      
+      // Map columns for display - Enhanced detection for currency symbols in column names
+      // Exclude UIN column from grid display but include all other columns
+      const filteredHeaders = headers.filter(h => {
+        const lower = h.toLowerCase();
+        return !(lower.includes('uin') || 
+                lower.includes('unique') || 
+                lower.includes('identifier') ||
+                (lower.includes('id') && lower.length <= 5)); // Exclude short ID columns
+      });
+      
+      console.log('Filtered headers (excluding UIN):', filteredHeaders);
+      
+      dynamicColumnMapping = {
+        date: headers.find(h => 
+          h.toLowerCase().includes('date') ||
+          h.toLowerCase().includes('time') ||
+          h.toLowerCase().includes('created') ||
+          h.toLowerCase().includes('updated')
+        ) || filteredHeaders[0],
+        
+        country: headers.find(h => 
+          h.toLowerCase().includes('country') ||
+          h.toLowerCase().includes('location') ||
+          h.toLowerCase().includes('region') ||
+          h.toLowerCase().includes('nation')
+        ) || filteredHeaders.find(h => h.toLowerCase().includes('country')),
+        
+        entity: headers.find(h => 
+          h.toLowerCase().includes('entity') ||
+          h.toLowerCase().includes('company') ||
+          h.toLowerCase().includes('name') ||
+          h.toLowerCase().includes('subsidiary')
+        ) || filteredHeaders[1],
+        
+        // Find equity columns (with or without currency symbols)
+        equity: headers.find(h => {
+          const lower = h.toLowerCase();
+          return (lower.includes('equity') ||
+                  lower.includes('investment') ||
+                  lower.includes('share') ||
+                  lower.includes('capital')) &&
+                 !lower.includes('debt') && !lower.includes('loan');
+        }) || filteredHeaders[2],
+        
+        // Find general debt column (without specific currency)
+        debt: headers.find(h => {
+          const lower = h.toLowerCase();
+          return (lower.includes('debt') ||
+                  lower.includes('loan') ||
+                  lower.includes('amount') ||
+                  lower.includes('liability')) &&
+                 !lower.includes('£') && !lower.includes('$') && 
+                 !lower.includes('gbp') && !lower.includes('usd');
+        }) || filteredHeaders[3],
+        
+        // Find pound/GBP currency columns
+        currency1: headers.find(h => {
+          const lower = h.toLowerCase();
+          return lower.includes('£') ||
+                 lower.includes('gbp') ||
+                 lower.includes('pounds') ||
+                 lower.includes('pound') ||
+                 (lower.includes('debt') && lower.includes('£')) ||
+                 (lower.includes('equity') && lower.includes('£'));
+        }) || headers.find(h => h.toLowerCase().includes('debt') && h.includes('£')) || filteredHeaders[4],
+        
+        // Find dollar/USD currency columns
+        currency2: headers.find(h => {
+          const lower = h.toLowerCase();
+          return lower.includes('$') ||
+                 lower.includes('usd') ||
+                 lower.includes('dollars') ||
+                 lower.includes('dollar') ||
+                 (lower.includes('debt') && lower.includes('$')) ||
+                 (lower.includes('equity') && lower.includes('$'));
+        }) || headers.find(h => h.toLowerCase().includes('debt') && h.includes('$')) || filteredHeaders[5],
+        
+        // Additional columns for specific patterns
+        equityPound: headers.find(h => {
+          const lower = h.toLowerCase();
+          return lower.includes('equity') && (lower.includes('£') || lower.includes('gbp'));
+        }),
+        
+        equityDollar: headers.find(h => {
+          const lower = h.toLowerCase();
+          return lower.includes('equity') && (lower.includes('$') || lower.includes('usd'));
+        }),
+        
+        debtPound: headers.find(h => {
+          const lower = h.toLowerCase();
+          return lower.includes('debt') && (lower.includes('£') || lower.includes('gbp'));
+        }),
+        
+        debtDollar: headers.find(h => {
+          const lower = h.toLowerCase();
+          return lower.includes('debt') && (lower.includes('$') || lower.includes('usd'));
+        }),
+        
+        // Store all filtered headers for additional column detection
+        allFilteredHeaders: filteredHeaders
+      };
+      
+      console.log('Dynamic column mapping:', dynamicColumnMapping);
+      console.log('Dynamic UIN mapping:', dynamicUINMap);
+      
+      // Log all detected currency columns for debugging
+      console.log('Currency column detection:');
+      console.log('- Equity with £:', dynamicColumnMapping.equityPound);
+      console.log('- Equity with $:', dynamicColumnMapping.equityDollar);
+      console.log('- Debt with £:', dynamicColumnMapping.debtPound);
+      console.log('- Debt with $:', dynamicColumnMapping.debtDollar);
+      console.log('- Currency1 (£):', dynamicColumnMapping.currency1);
+      console.log('- Currency2 ($):', dynamicColumnMapping.currency2);
+      
+      // Update grid headers with actual Excel column names
+      updateGridHeaders();
+    }
+
+    // Update grid headers with actual column names from Excel
+    function updateGridHeaders() {
+      console.log('Updating grid headers with Excel column names...');
+      
+      // Get all available columns (excluding UIN)
+      const availableColumns = dynamicColumnMapping.allFilteredHeaders || [];
+      console.log('Available columns for display:', availableColumns);
+      
+      // Create header structure with all available columns
+      let headersHtml = '<th>S.No</th>'; // Always include serial number
+      
+      // Add all available columns except UIN
+      availableColumns.forEach(columnName => {
+        headersHtml += `<th>${columnName}</th>`;
+      });
+      
+      console.log('Generated headers HTML:', headersHtml);
+      
+      // Update all table headers with the same dynamic structure
+      const ukHeaders = document.querySelector('#ukTable thead tr');
+      if (ukHeaders) {
+        ukHeaders.innerHTML = headersHtml;
+      }
+      
+      const polandHeaders = document.querySelector('#polandTable thead tr');
+      if (polandHeaders) {
+        polandHeaders.innerHTML = headersHtml;
+      }
+      
+      const australiaHeaders = document.querySelector('#australiaTable thead tr');
+      if (australiaHeaders) {
+        australiaHeaders.innerHTML = headersHtml;
+      }
+      
+      console.log('All grid headers updated with dynamic structure');
+      
+      // Update grid titles with dynamic UINs
+      const ukTitle = document.querySelector('#ukGrid .grid-title');
+      if (ukTitle && dynamicUINMap.UK) {
+        ukTitle.innerHTML = `
+          <i class="fas fa-flag"></i>
+          UK - UIN: ${dynamicUINMap.UK}
+        `;
+      }
+      
+      const polandTitle = document.querySelector('#polandGrid .grid-title');
+      if (polandTitle && dynamicUINMap.Poland) {
+        polandTitle.innerHTML = `
+          <i class="fas fa-flag"></i>
+          POLAND - UIN: ${dynamicUINMap.Poland}
+        `;
+      }
+      
+      const australiaTitle = document.querySelector('#australiaGrid .grid-title');
+      if (australiaTitle && dynamicUINMap.Australia) {
+        australiaTitle.innerHTML = `
+          <i class="fas fa-flag"></i>
+          AUSTRALIA - UIN: ${dynamicUINMap.Australia}
+        `;
+      }
+    }
+
+    // Show message to select country
+    function showCountrySelectionMessage() {
+      const tableBody = document.getElementById('tableBody');
+      const tableHeaders = document.getElementById('tableHeaders');
+      
+      // Clear existing content
+      tableHeaders.innerHTML = '';
+      tableBody.innerHTML = '';
+      
+      // Show selection message
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '100%');
+      td.style.textAlign = 'center';
+      td.style.color = '#BDC3C7';
+      td.style.padding = '40px';
+      td.style.fontSize = '16px';
+      td.innerHTML = '<i class="fas fa-arrow-up" style="margin-right: 10px;"></i>Please select a country from the dropdown above to view data';
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    }
+
+    // Filter data by selected country
+    function filterByCountry() {
+      const selectedCountry = document.getElementById('countryDropdown').value;
+      const uinDisplay = document.getElementById('uinDisplay');
+      const uinValue = document.getElementById('uinValue');
+      
+      if (!selectedCountry || !allCountriesData) {
+        // Hide UIN display and grids, show selection message
+        uinDisplay.style.display = 'none';
+        document.getElementById('gridsContainer').style.display = 'none';
+        document.getElementById('tableContainer').style.display = 'block';
+        showCountrySelectionMessage();
+        return;
+      }
+
+      // Show UIN for selected country (use dynamic UIN if available)
+      const uin = dynamicUINMap[selectedCountry] || DEFAULT_UIN_MAP[selectedCountry];
+      if (uin) {
+        uinValue.textContent = `UIN: ${uin}`;
+        uinDisplay.style.display = 'flex';
+      }
+
+      // Show only the selected country's grid
+      document.getElementById('tableContainer').style.display = 'none';
+      document.getElementById('gridsContainer').style.display = 'block';
+      
+      // Hide all grids first
+      document.querySelectorAll('.grid-item').forEach(grid => {
+        grid.style.display = 'none';
+      });
+      
+      // Show only the selected country's grid
+      const gridMap = {
+        'UK': 'ukGrid',
+        'Poland': 'polandGrid', 
+        'Australia': 'australiaGrid'
+      };
+      
+      const selectedGridId = gridMap[selectedCountry];
+      if (selectedGridId) {
+        const selectedGrid = document.getElementById(selectedGridId);
+        if (selectedGrid) {
+          selectedGrid.style.display = 'block';
+          // Populate the selected grid with data
+          populateSelectedCountryGrid(selectedCountry);
+        }
+      }
+    }
+
+    // Populate selected country grid with data
+    function populateSelectedCountryGrid(selectedCountry) {
+      if (!allCountriesData || allCountriesData.length === 0) {
+        console.error('No data available to populate grid');
+        return;
+      }
+
+      console.log('Populating grid for country:', selectedCountry);
+      console.log('All data:', allCountriesData);
+      console.log('Data sample row:', allCountriesData[0]);
+
+      // Filter data by country - look for country column in Excel data
+      const headers = Object.keys(allCountriesData[0]);
+      console.log('Available columns:', headers);
+
+      // Try to find country column (case-insensitive)
+      const countryColumn = headers.find(h => 
+        h.toLowerCase().includes('country') || 
+        h.toLowerCase().includes('location') ||
+        h.toLowerCase().includes('region') ||
+        h.toLowerCase().includes('nation') ||
+        h.toLowerCase().includes('state') ||
+        h.toLowerCase().includes('territory')
+      );
+
+      console.log('Country column found:', countryColumn);
+
+      // Also try to find any column that might indicate geographic location
+      const geoColumn = headers.find(h => {
+        const lowerH = h.toLowerCase();
+        return lowerH.includes('uk') || lowerH.includes('poland') || lowerH.includes('australia') ||
+               lowerH.includes('britain') || lowerH.includes('england') || lowerH.includes('gb');
+      });
+
+      console.log('Geographic column found:', geoColumn);
+
+      // Filter data for the selected country
+      let countryData = [];
+      let filterColumn = countryColumn || geoColumn;
+      
+      if (filterColumn) {
+        console.log(`Using column '${filterColumn}' for filtering`);
+        countryData = allCountriesData.filter(row => {
+          const rowValue = String(row[filterColumn] || '').trim().toLowerCase();
+          const selectedLower = selectedCountry.toLowerCase();
+          
+          console.log(`Checking row value: "${rowValue}" against selected: "${selectedLower}"`);
+          
+          // Try exact match first
+          if (rowValue === selectedLower) {
+            return true;
+          }
+          
+          // Try partial matches for common variations
+          if (selectedCountry === 'UK') {
+            return rowValue.includes('uk') || 
+                   rowValue.includes('united kingdom') || 
+                   rowValue.includes('britain') ||
+                   rowValue.includes('england') ||
+                   rowValue.includes('gb');
+          }
+          
+          if (selectedCountry === 'Poland') {
+            return rowValue.includes('poland') || 
+                   rowValue.includes('pol');
+          }
+          
+          if (selectedCountry === 'Australia') {
+            return rowValue.includes('australia') || 
+                   rowValue.includes('aus') ||
+                   rowValue.includes('oz');
+          }
+          
+          return false;
+        });
+      } else {
+        // If no country/geo column found, try to filter by any text column that might contain country info
+        console.warn('No country/geo column found. Trying to filter by text content in any column.');
+        
+        countryData = allCountriesData.filter(row => {
+          // Check all string columns for country mentions
+          const rowText = Object.values(row).join(' ').toLowerCase();
+          
+          if (selectedCountry === 'UK') {
+            return rowText.includes('uk') || 
+                   rowText.includes('united kingdom') || 
+                   rowText.includes('britain') ||
+                   rowText.includes('england');
+          }
+          
+          if (selectedCountry === 'Poland') {
+            return rowText.includes('poland');
+          }
+          
+          if (selectedCountry === 'Australia') {
+            return rowText.includes('australia');
+          }
+          
+          return false;
+        });
+        
+        // If still no data found, show empty state instead of sample data
+        if (countryData.length === 0) {
+          console.warn(`No data found for ${selectedCountry} in Excel sheet.`);
+          showEmptyCountryGrid(selectedCountry);
+          return;
+        }
+      }
+
+      console.log('Filtered country data for', selectedCountry, ':', countryData);
+      console.log('Number of rows found:', countryData.length);
+      
+      if (countryData.length > 0) {
+        console.log('First row of filtered data:', countryData[0]);
+        console.log('Sample values from first row:');
+        Object.entries(countryData[0]).forEach(([key, value]) => {
+          console.log(`  ${key}: "${value}"`);
+        });
+      }
+
+      if (countryData.length === 0) {
+        console.warn(`No data found for country: ${selectedCountry}`);
+        // Show empty state
+        showEmptyCountryGrid(selectedCountry);
+        return;
+      }
+
+      // Populate the appropriate table with real Excel data using dynamic mapping
+      const tableBodyMap = {
+        'UK': 'ukTableBody',
+        'Poland': 'polandTableBody',
+        'Australia': 'australiaTableBody'
+      };
+
+      const tableBodyId = tableBodyMap[selectedCountry];
+      populateGridTableWithRealData(tableBodyId, countryData, selectedCountry, headers);
+    }
+
+    // Show empty state for country with no data
+    function showEmptyCountryGrid(selectedCountry) {
+      const tableBodyMap = {
+        'UK': 'ukTableBody',
+        'Poland': 'polandTableBody',
+        'Australia': 'australiaTableBody'
+      };
+
+      const tableBodyId = tableBodyMap[selectedCountry];
+      const tableBody = document.getElementById(tableBodyId);
+      
+      if (tableBody) {
+        tableBody.innerHTML = '';
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.setAttribute('colspan', '6'); // Adjust based on number of columns
+        td.style.textAlign = 'center';
+        td.style.color = '#BDC3C7';
+        td.style.padding = '40px';
+        td.style.fontSize = '14px';
+        td.innerHTML = `<i class="fas fa-info-circle" style="margin-right: 10px;"></i>No data available for ${selectedCountry}`;
+        tr.appendChild(td);
+        tableBody.appendChild(tr);
+      }
+    }
+
+    // Populate grid table with real Excel data using dynamic column mapping
+    function populateGridTableWithRealData(tableBodyId, data, selectedCountry, headers) {
+      const tableBody = document.getElementById(tableBodyId);
+      if (!tableBody) return;
+
+      tableBody.innerHTML = '';
+
+      console.log('Populating table:', tableBodyId, 'with', data.length, 'rows');
+      console.log('Using dynamic column mapping:', dynamicColumnMapping);
+
+      // Get all available columns (excluding UIN)
+      const availableColumns = dynamicColumnMapping.allFilteredHeaders || [];
+      console.log('Available columns for population:', availableColumns);
+
+      // Add data rows using dynamic column structure
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        
+        // Start with row number
+        let rowHtml = `<td>${index + 1}</td>`;
+        
+        // Add data for each available column
+        availableColumns.forEach(columnName => {
+          const cellValue = formatCellValue(row[columnName], columnName);
+          rowHtml += `<td>${cellValue}</td>`;
+        });
+        
+        tr.innerHTML = rowHtml;
+        
+        console.log(`Row ${index + 1} data populated with ${availableColumns.length} columns`);
+        
+        tableBody.appendChild(tr);
+      });
+
+      // Calculate and add totals using all available columns
+      addTotalRowWithDynamicColumns(tableBody, data, selectedCountry, availableColumns);
+    }
+
+    // Add total row with dynamic column calculations
+    function addTotalRowWithDynamicColumns(tableBody, data, selectedCountry, availableColumns) {
+      const totalRow = document.createElement('tr');
+      totalRow.className = 'total-row';
+
+      console.log('Calculating totals for dynamic columns:', availableColumns);
+
+      // Calculate totals from real data using dynamic column names
+      let totals = {};
+      let numericColumns = [];
+      
+      // Identify which columns contain FINANCIAL numeric data (exclude dates, countries, entities, descriptions)
+      availableColumns.forEach(columnName => {
+        const columnLower = columnName.toLowerCase();
+        
+        // Skip non-financial columns
+        const isNonFinancialColumn = columnLower.includes('date') || 
+                                   columnLower.includes('time') || 
+                                   columnLower.includes('country') || 
+                                   columnLower.includes('entity') || 
+                                   columnLower.includes('name') || 
+                                   columnLower.includes('description') || 
+                                   columnLower.includes('status') || 
+                                   columnLower.includes('type') || 
+                                   columnLower.includes('category') ||
+                                   columnLower.includes('location') ||
+                                   columnLower.includes('region') ||
+                                   columnLower.includes('host');
+        
+        if (isNonFinancialColumn) {
+          console.log(`Skipping non-financial column: "${columnName}"`);
+          return; // Skip this column
+        }
+        
+        let hasNumbers = false;
+        let sum = 0;
+        
+        data.forEach(row => {
+          const value = row[columnName];
+          const numValue = parseFloat(String(value || '').replace(/[^\d.-]/g, ''));
+          
+          // Additional check: skip if it looks like an Excel date serial number
+          if (!isNaN(numValue) && isFinite(numValue) && numValue !== 0) {
+            // Skip values that look like Excel date serial numbers (typically 40000-50000 range)
+            if (Number.isInteger(numValue) && numValue > 40000 && numValue < 50000) {
+              console.log(`Skipping potential date value in column "${columnName}": ${numValue}`);
+              return; // Skip this value
+            }
+            
+            sum += numValue;
+            hasNumbers = true;
+          }
+        });
+        
+        if (hasNumbers) {
+          totals[columnName] = sum;
+          numericColumns.push(columnName);
+          console.log(`Financial column "${columnName}" total:`, sum);
+        }
+      });
+
+      // Generate total row HTML with dynamic column count
+      let totalRowHtml = '';
+      let nonNumericCount = availableColumns.length - numericColumns.length;
+      
+      // Add TOTAL cell with proper colspan (including the S.No column)
+      const totalColspan = nonNumericCount + 1; // +1 for the S.No column
+      totalRowHtml += `<td colspan="${totalColspan}"><strong>TOTAL</strong></td>`;
+      
+      // Add totals for numeric columns in the order they appear
+      availableColumns.forEach(columnName => {
+        if (numericColumns.includes(columnName)) {
+          totalRowHtml += `<td><strong>${totals[columnName].toLocaleString()}</strong></td>`;
+        }
+      });
+      
+      totalRow.innerHTML = totalRowHtml;
+      
+      console.log('Generated dynamic total row HTML:', totalRow.innerHTML);
+      console.log(`Total colspan: ${totalColspan}, Numeric columns: ${numericColumns.length}`);
+      tableBody.appendChild(totalRow);
+    }
+
+    // Format cell value for display
+    function formatCellValue(value, columnName = '') {
+      if (value === null || value === undefined || value === '') {
+        return '-';
+      }
+      
+      // Convert to string and clean up
+      let strValue = String(value).trim();
+      
+      // Handle different data types from Excel
+      if (strValue === '' || strValue === 'null' || strValue === 'undefined') {
+        return '-';
+      }
+      
+      // Check if it's a numeric value
+      if (!isNaN(parseFloat(strValue)) && isFinite(strValue)) {
+        const numValue = parseFloat(strValue);
+        
+        // Check if this is likely a date column based on column name
+        const columnLower = columnName.toLowerCase();
+        const isDateColumn = columnLower.includes('date') || 
+                            columnLower.includes('time') || 
+                            columnLower.includes('created') || 
+                            columnLower.includes('updated') ||
+                            columnLower.includes('modified');
+        
+        // Only convert to date if it's explicitly a date column AND in a reasonable Excel date range
+        if (isDateColumn && Number.isInteger(numValue) && numValue > 40000 && numValue < 50000) {
+          try {
+            // Excel dates start from January 1, 1900 (serial number 1)
+            const excelEpoch = new Date(1900, 0, 1);
+            const jsDate = new Date(excelEpoch.getTime() + (numValue - 1) * 24 * 60 * 60 * 1000);
+            
+            // Validate if the resulting date makes sense (2009-2037 range for typical Excel dates)
+            if (jsDate.getFullYear() >= 2009 && jsDate.getFullYear() <= 2037) {
+              return jsDate.toLocaleDateString();
+            }
+          } catch (e) {
+            // If date conversion fails, treat as regular number
+          }
+        }
+        
+        // For all other numeric values (including financial data), format as number
+        if (numValue === 0) return '-';
+        return numValue.toLocaleString();
+      }
+      
+      // If it's a date-like string (YYYY-MM-DD format), format it
+      if (strValue.includes('-') && strValue.length >= 8) {
+        try {
+          const date = new Date(strValue);
+          if (!isNaN(date.getTime()) && strValue.match(/^\d{4}-\d{1,2}-\d{1,2}/)) {
+            return date.toLocaleDateString();
+          }
+        } catch (e) {
+          // Not a valid date, continue with original value
+        }
+      }
+      
+      return strValue;
+    }
+
+    // Create entities table with dynamic Excel data
+    function createEntitiesTable(data, countryName = '') {
+      const tableHeaders = document.getElementById('tableHeaders');
+      const tableBody = document.getElementById('tableBody');
+      
+      // Clear existing content
+      tableHeaders.innerHTML = '';
+      tableBody.innerHTML = '';
+
+      if (data.length === 0) {
+        showCountrySelectionMessage();
+        return;
+      }
+
+      // Update table title to show selected country
+      const tableTitle = document.querySelector('.table-title');
+      if (countryName) {
+        tableTitle.innerHTML = `<i class="fas fa-table"></i>${countryName} - Subsidiary Entities Details`;
+      } else {
+        tableTitle.innerHTML = `<i class="fas fa-table"></i>Subsidiary Entities Details`;
+      }
+
+      // Create headers from Excel column names
+      const headers = Object.keys(data[0]);
+      headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        tableHeaders.appendChild(th);
+      });
+
+      // Create rows from Excel data
+      data.slice(0, 100).forEach(row => { // Limit to first 100 rows for performance
+        const tr = document.createElement('tr');
+        headers.forEach(header => {
+          const td = document.createElement('td');
+          let value = row[header];
+          
+          // Format the value appropriately
+          if (value === null || value === undefined || value === '') {
+            value = '-';
+          } else if (typeof value === 'number') {
+            // Check if it's likely a currency amount
+            if (header.toLowerCase().includes('amount') || 
+                header.toLowerCase().includes('value') || 
+                header.toLowerCase().includes('total') ||
+                header.toLowerCase().includes('equity') ||
+                header.toLowerCase().includes('debt')) {
+              value = '$' + value.toLocaleString();
+            } else {
+              value = value.toLocaleString();
+            }
+          } else {
+            value = String(value).trim();
+          }
+          
+          td.textContent = value;
+          tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+      });
+
+      if (data.length > 100) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.setAttribute('colspan', headers.length);
+        td.style.textAlign = 'center';
+        td.style.color = '#BDC3C7';
+        td.style.fontStyle = 'italic';
+        td.textContent = `... and ${data.length - 100} more rows`;
+        tr.appendChild(td);
+        tableBody.appendChild(tr);
+      }
+    }
+
+    // Utility functions
+    function updateButtonText(text) {
+      const button = document.querySelector('.upload-btn');
+      if (button) {
+        if (text === BUTTON_TEXT.LOADING_DATA) {
+          button.innerHTML = '<div class="loading-spinner"></div>' + text;
+        } else if (text === BUTTON_TEXT.REFRESH) {
+          button.innerHTML = '<i class="fas fa-sync-alt"></i>' + text;
+        } else {
+          button.innerHTML = text;
+        }
+      }
+    }
+
+    function showStatus(type, message) {
+      const statusDiv = document.getElementById('statusMessage');
+      statusDiv.className = `status-message status-${type}`;
+      statusDiv.textContent = message;
+      statusDiv.style.display = 'block';
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        statusDiv.style.display = 'none';
+      }, 5000);
+    }
+
+    function showInitialMessage() {
+      // Clear any existing data
+      currentData = null;
+      allCountriesData = null;
+      dynamicUINMap = {};
+      dynamicColumnMapping = {};
+      
+      // Reset UI to initial state
+      document.getElementById('initialMessage').style.display = 'block';
+      document.getElementById('countrySelector').style.display = 'none';
+      document.getElementById('tableContainer').style.display = 'none';
+      document.getElementById('gridsContainer').style.display = 'none';
+      document.getElementById('uinDisplay').style.display = 'none';
+      
+      // Clear all grids
+      document.getElementById('ukGrid').style.display = 'none';
+      document.getElementById('polandGrid').style.display = 'none';
+      document.getElementById('australiaGrid').style.display = 'none';
+      
+      // Reset grid headers to defaults
+      resetGridHeaders();
+    }
+
+    // Reset grid headers to default state
+    function resetGridHeaders() {
+      // Reset UK table headers
+      const ukHeaders = document.querySelector('#ukTable thead tr');
+      if (ukHeaders) {
+        ukHeaders.innerHTML = `
+          <th>S.No</th>
+          <th>DATE</th>
+          <th>ENTITY</th>
+          <th>EQUITY</th>
+          <th>DEBT IN £</th>
+          <th>DEBT IN $</th>
+        `;
+      }
+      
+      // Reset Poland table headers  
+      const polandHeaders = document.querySelector('#polandTable thead tr');
+      if (polandHeaders) {
+        polandHeaders.innerHTML = `
+          <th>S.No</th>
+          <th>DATE</th>
+          <th>ENTITY</th>
+          <th>EQUITY</th>
+          <th>DEBT</th>
+        `;
+      }
+      
+      // Reset Australia table headers
+      const australiaHeaders = document.querySelector('#australiaTable thead tr');
+      if (australiaHeaders) {
+        australiaHeaders.innerHTML = `
+          <th>S.No</th>
+          <th>DATE</th>
+          <th>ENTITY</th>
+          <th>EQUITY</th>
+          <th>DEBT</th>
+        `;
+      }
+      
+      // Reset grid titles to defaults
+      const ukTitle = document.querySelector('#ukGrid .grid-title');
+      if (ukTitle) {
+        ukTitle.innerHTML = `
+          <i class="fas fa-flag"></i>
+          UK - UIN: Loading...
+        `;
+      }
+      
+      const polandTitle = document.querySelector('#polandGrid .grid-title');
+      if (polandTitle) {
+        polandTitle.innerHTML = `
+          <i class="fas fa-flag"></i>
+          POLAND - UIN: Loading...
+        `;
+      }
+      
+      const australiaTitle = document.querySelector('#australiaGrid .grid-title');
+      if (australiaTitle) {
+        australiaTitle.innerHTML = `
+          <i class="fas fa-flag"></i>
+          AUSTRALIA - UIN: Loading...
+        `;
+      }
+    }
+
+    // Try to restore authentication state on page load
+    async function tryRestoreGlobalAuth() {
+      try {
+        const savedAuthState = loadAuthState();
+        
+        if (savedAuthState) {
+          const accounts = msalInstance.getAllAccounts();
+          const savedAccount = accounts.find(acc => acc.homeAccountId === savedAuthState.accountId);
+          
+          if (savedAccount) {
+            const tokenRequest = {
+              scopes: ['Files.Read', 'Files.Read.All', 'Sites.Read.All'],
+              account: savedAccount
+            };
+            
+            const tokenResponse = await msalInstance.acquireTokenSilent(tokenRequest);
+            
+            globalAuth.isAuthenticated = true;
+            globalAuth.accessToken = tokenResponse.accessToken;
+            globalAuth.account = savedAccount;
+            globalAuth.userName = savedAuthState.userName;
+            
+            updateHeaderUI();
+            await loadEntitiesData();
+            return;
+          }
+        }
+        
+        showInitialMessage();
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+        updateHeaderUI();
+        
+      } catch (error) {
+        console.log('Failed to restore authentication state:', error.message);
+        localStorage.removeItem(AUTH_STATE_KEY);
+        globalAuth.isAuthenticated = false;
+        showInitialMessage();
+        updateButtonText(BUTTON_TEXT.GET_DATA);
+        updateHeaderUI();
+      }
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+      tryRestoreGlobalAuth();
+    });
+  </script>
+</body>
+</html>
