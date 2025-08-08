@@ -421,7 +421,7 @@
           <span class="nav-text">Write-Off</span>
         </div>
 
-      <div class="nav-item" data-page="imports" onclick="loadPage('imports')">
+      <div class="nav-item" data-page="imports" onclick="loadPage('Imports')">
         <i class="fas fa-ship nav-icon"></i>
         <span class="nav-text">Imports</span>
       </div>
@@ -598,7 +598,7 @@
           pageTitle.textContent = 'Write-Off Details';
           break;
         case 'imports':
-          pageTitle.textContent = 'Imports Dashboard';
+          pageTitle.textContent = 'Imports';
           break;
           case 'Documents':
           pageTitle.textContent = 'Documents';
@@ -635,7 +635,10 @@
       }
       else if (pageId === 'IRM') {
         contentFrame.src = 'irm.html';
-      }else {
+      }
+      else if (pageId === 'Imports') {
+        contentFrame.src = 'imports.html';
+      } else {
         // For other pages, you can create specific HTML files or handle them as needed
         contentFrame.src = 'dashboard.html'; // Default for now
       }

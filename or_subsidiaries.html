@@ -31,7 +31,7 @@
       left: 0;
       right: 0;
       background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-      padding: 5px 30px;
+      padding: 5px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -132,9 +132,10 @@
     }
 
     .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 20px;
+      width: 100%;
+      margin: 0;
+      padding: 0 20px;
+      box-sizing: border-box;
     }
 
     /* Status message */
@@ -1217,13 +1218,12 @@
       // Hide initial message and show country selector
       document.getElementById('initialMessage').style.display = 'none';
       document.getElementById('countrySelector').style.display = 'block';
-      document.getElementById('tableContainer').style.display = 'none';
+      document.getElementById('tableContainer').style.display = 'block';
       document.getElementById('gridsContainer').style.display = 'none';
-
-      // Auto-select UK by default and trigger filtering
-      document.getElementById('countryDropdown').value = 'UK';
       document.getElementById('uinDisplay').style.display = 'none';
-      filterByCountry();
+
+      // Show country selection message by default (no auto-selection)
+      showCountrySelectionMessage();
     }
 
     // Extract dynamic mapping from Excel data

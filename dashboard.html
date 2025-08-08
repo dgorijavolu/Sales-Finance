@@ -1212,17 +1212,15 @@
             const table = document.createElement('table');
             const thead = document.createElement('thead');
             const tbody = document.createElement('tbody');
-            
-            // Create Header
+            // Create Header 
             const headerRow = document.createElement('tr');
-            ['Customer', 'Inv. No', 'Inv. Date', 'Due Date', "Inv. Value", "Rcvd Value", "Outstanding"].forEach((headerText, index) => {
+            ['Customer', 'Inv. No', 'Inv. Date', "Inv. Value", "Rcvd Value", "Outstanding"].forEach((headerText, index) => {
                 const th = document.createElement('th');
                 th.textContent = headerText;
-                if ([4,5,6].includes(index)) th.classList.add('numeric');
+                if ([3,4,5].includes(index)) th.classList.add('numeric');
                 headerRow.appendChild(th);
             });
             thead.appendChild(headerRow);
-            
             // Create Body
             outstandingItems.forEach(item => {
                 const tr = document.createElement('tr');
@@ -1230,14 +1228,12 @@
                     <td>${formatNullableString(item.customer)}</td>
                     <td>${formatNullableString(item.invoiceNo)}</td>
                     <td>${formatDate(item.invDate)}</td>
-                    <td>${formatDate(item.dueDate)}</td>
                     <td class="numeric">${formatCurrency(item.invValue, 2)}</td>
                     <td class="numeric">${formatCurrency(item.rcvdValue, 2)}</td>
                     <td class="numeric">${formatCurrency(item.outstanding, 2)}</td>
                 `;
                 tbody.appendChild(tr);
             });
-
             table.appendChild(thead);
             table.appendChild(tbody);
             periodOutstandingTableContainerElement.appendChild(table);

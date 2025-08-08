@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Softex BRC Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -36,15 +37,16 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            padding: 5px 30px;
+            padding: 5px 20px;
         }
 
         .header-content {
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            max-width: 1400px;
-            margin: 0 auto;
+            width: 100%;
+            margin: 0;
+            padding: 0;
         }
 
         .header-actions {
@@ -108,8 +110,10 @@
         }
 
         .dashboard-container {
-            max-width: 1400px;
-            margin: 0 auto;
+            width: 100%;
+            margin: 0;
+            padding: 0 20px;
+            box-sizing: border-box;
         }
 
         .dashboard-header {
@@ -188,17 +192,18 @@
 
         .charts-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 25px;
             margin-top: 25px;
             position: relative;
             min-height: 500px;
+            width: 100%;
         }
 
         .chart-container {
             background: rgba(255, 255, 255, 0.96);
             border-radius: 15px;
-            padding: 25px;
+            padding: 5px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
@@ -222,6 +227,7 @@
         .chart-wrapper {
             position: relative;
             height: 450px;
+            width: 99%;
         }
 
 
@@ -263,8 +269,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 100%;
-            max-width: 600px;
+            width: calc(100% - 40px);
+            max-width: none;
         }
 
 
@@ -337,6 +343,10 @@
         const msalInstance = new msal.PublicClientApplication(msalConfig);
 
         let chartInstances = [];
+        // Register datalabels plugin globally
+        if (window.Chart && window.Chart.register && window.ChartDataLabels) {
+            Chart.register(window.ChartDataLabels);
+        }
         let currentData = null;
         
         // Use centralized configuration
@@ -967,16 +977,22 @@
                         {
                             label: 'Softex No',
                             data: softexData,
-                            backgroundColor: 'rgba(255, 165, 0, 0.8)',
-                            borderColor: 'rgba(255, 165, 0, 1)',
-                            borderWidth: 2
+                            backgroundColor: 'rgba(255, 165, 0, 0.10)', // lighter fill
+                            borderColor: 'rgba(255, 165, 0, 0.5)', // lighter border
+                            borderWidth: 1.5,
+                            borderRadius: 0,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.7
                         },
                         {
                             label: 'BRC No',
                             data: brcData,
-                            backgroundColor: 'rgba(34, 139, 34, 0.8)',
-                            borderColor: 'rgba(34, 139, 34, 1)',
-                            borderWidth: 2
+                            backgroundColor: 'rgba(34, 139, 34, 0.10)', // lighter fill
+                            borderColor: 'rgba(34, 139, 34, 0.5)', // lighter border
+                            borderWidth: 1.5,
+                            borderRadius: 0,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.7
                         }
                     ]
                 },
@@ -996,6 +1012,15 @@
                             text: 'Export Invoice Comparison',
                             color: '#333',
                             font: { size: 16, weight: 'bold' }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#222',
+                            font: { weight: 'bold', size: 13 },
+                            formatter: function(value) {
+                                return value;
+                            }
                         }
                     },
                     scales: {
@@ -1018,10 +1043,11 @@
                     },
                     elements: {
                         bar: {
-                            borderRadius: 4
+                            borderRadius: 0
                         }
                     }
-                }
+                },
+                plugins: [window.ChartDataLabels]
             });
             
             chartInstances.push(chart);
@@ -1043,16 +1069,22 @@
                         {
                             label: 'Softex No',
                             data: softexData,
-                            backgroundColor: 'rgba(255, 165, 0, 0.8)',
-                            borderColor: 'rgba(255, 165, 0, 1)',
-                            borderWidth: 2
+                            backgroundColor: 'rgba(255, 165, 0, 0.10)',
+                            borderColor: 'rgba(255, 165, 0, 0.5)',
+                            borderWidth: 1.5,
+                            borderRadius: 0,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.7
                         },
                         {
                             label: 'BRC No',
                             data: brcData,
-                            backgroundColor: 'rgba(34, 139, 34, 0.8)',
-                            borderColor: 'rgba(34, 139, 34, 1)',
-                            borderWidth: 2
+                            backgroundColor: 'rgba(34, 139, 34, 0.10)',
+                            borderColor: 'rgba(34, 139, 34, 0.5)',
+                            borderWidth: 1.5,
+                            borderRadius: 0,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.7
                         }
                     ]
                 },
@@ -1072,6 +1104,15 @@
                             text: 'Inward Remittance Comparison',
                             color: '#333',
                             font: { size: 16, weight: 'bold' }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#222',
+                            font: { weight: 'bold', size: 13 },
+                            formatter: function(value) {
+                                return value;
+                            }
                         }
                     },
                     scales: {
@@ -1094,10 +1135,11 @@
                     },
                     elements: {
                         bar: {
-                            borderRadius: 4
+                            borderRadius: 0
                         }
                     }
-                }
+                },
+                plugins: [window.ChartDataLabels]
             });
             
             chartInstances.push(chart);

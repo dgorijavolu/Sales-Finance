@@ -33,7 +33,8 @@ window.FinanceDashboardConfig = {
     writeOff: "WRITE-OFF",
     orBranch: "OR Branch",           // For OR Branch page
     orSubsidiaries: "OR Entities",   // For OR Subsidiaries page
-    irm: "EXP_REA"                   // For IRM page
+    irm: "EXP_REA",
+    imports:"IMPORTS"                   // For Imports page
   },
 
   // Authentication State Configuration
