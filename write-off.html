@@ -213,22 +213,24 @@
     }
 
     .data-table th {
-      background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
       color: #FFFFFF;
       padding: 15px 12px;
       text-align: left;
       font-weight: 600;
       border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-      font-size: 14px;
+      font-size: 16px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
     }
 
     .data-table td {
       padding: 12px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       color: #FFFFFF;
-      font-size: 14px;
+      font-size: 15px;
     }
 
     .data-table tr:hover {
@@ -451,12 +453,94 @@
       line-height: 1.6;
     }
 
-    /* DataTables Custom Styling */
-    .dataTables_wrapper {
-      background: rgba(52, 73, 94, 0.9);
-      border-radius: 15px;
-      padding: 20px;
+    /* DataTables Pagination and Info Styling */
+    .dataTables_wrapper .dataTables_paginate {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
       margin-top: 20px;
+      font-size: 18px;
+      gap: 10px;
+      width: 100%;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      background: #f39c12;
+      border: 2px solid #e67e22;
+      color: #fff !important;
+      font-size: 18px;
+      margin: 0 6px;
+      padding: 6px 18px;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+      cursor: pointer;
+      min-width: 38px;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(243, 156, 18, 0.08);
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+      background: #e67e22;
+      color: #fff !important;
+      font-weight: bold;
+      border: 2px solid #f39c12;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(230, 126, 34, 0.15);
+      outline: none;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
+      background: #e67e22;
+      color: #fff !important;
+      border: 2px solid #f39c12;
+      box-shadow: 0 2px 8px rgba(230, 126, 34, 0.12);
+    }
+    .dataTables_wrapper .dataTables_paginate .ellipsis {
+      color: #fff;
+      font-size: 20px;
+      margin: 0 8px;
+    }
+    .dataTables_wrapper .dataTables_info {
+      color: #BDC3C7;
+      font-size: 16px;
+      text-align: left;
+      margin-bottom: 10px;
+      margin-top: 10px;
+    }
+    /* Remove default list style for pagination */
+    .dataTables_wrapper .dataTables_paginate ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      gap: 0;
+    }
+    /* Hide bullet points for pagination */
+    .dataTables_wrapper .dataTables_paginate ul li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    /* Hide DataTables default background on disabled buttons */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+      color: #888 !important;
+      background: none !important;
+      cursor: not-allowed !important;
+      opacity: 0.5;
+    }
+    /* Responsive: pagination font smaller on mobile */
+    @media (max-width: 768px) {
+      .dataTables_wrapper .dataTables_paginate {
+        font-size: 14px;
+      }
+      .dataTables_wrapper .dataTables_paginate .paginate_button {
+        font-size: 14px;
+        padding: 4px 8px;
+      }
+      .dataTables_wrapper .dataTables_info {
+        font-size: 13px;
+      }
     }
 
     .dataTables_filter input {
@@ -483,115 +567,13 @@
       color: #FFFFFF !important;
     }
 
-    #writeOffTable {
-      background: rgba(44, 62, 80, 0.9);
-      border-radius: 10px;
-      overflow: hidden;
-    }
+    /* Use data-table class styles instead */
 
-    #writeOffTable thead th {
-      background: #FFDCDC;
-      color: #2c3e50;
-      border: none;
-      padding: 15px 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-size: 12px;
-      border-bottom: 2px solid #FFB6B6;
-    }
+  /* Remove custom #writeOffTable thead th styles to use .data-table th (orange) */
 
-    #writeOffTable tbody td {
-      background: rgba(52, 73, 94, 0.9);
-      color: #FFFFFF;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 12px;
-      font-size: 13px;
-    }
+    /* Use orange DataTables theme styles defined above */
 
-    #writeOffTable tbody tr:hover td {
-      background: rgba(52, 152, 219, 0.2);
-    }
-
-    .dt-buttons {
-      margin-bottom: 15px;
-    }
-
-    .dt-button {
-      background: linear-gradient(135deg, #FFB6B6 0%, #FFDCDC 100%) !important;
-      border: none !important;
-      color: #2c3e50 !important;
-      padding: 8px 15px !important;
-      border-radius: 5px !important;
-      margin-right: 5px !important;
-      font-size: 12px !important;
-      box-shadow: 0 2px 4px rgba(255, 182, 182, 0.2) !important;
-    }
-
-    .dt-button:hover {
-      background: linear-gradient(135deg, #FF9999 0%, #FFB6B6 100%) !important;
-      transform: translateY(-1px) !important;
-      box-shadow: 0 4px 8px rgba(255, 153, 153, 0.3) !important;
-    }
-
-    /* Enhanced Pagination Styling */
-    .dataTables_paginate {
-      margin-top: 20px;
-      text-align: center;
-      background: transparent !important;
-      border: none !important;
-    }
-
-    .dataTables_paginate .paginate_button {
-      background: linear-gradient(135deg, #FFB6B6 0%, #FFDCDC 100%) !important;
-      border: 1px solid #FFB6B6 !important;
-      color: #2c3e50 !important;
-      margin: 0 3px !important;
-      border-radius: 6px !important;
-      padding: 8px 12px !important;
-      font-size: 13px !important;
-      font-weight: 500 !important;
-      transition: all 0.3s ease !important;
-      box-shadow: 0 2px 4px rgba(255, 182, 182, 0.2) !important;
-      display: inline-block !important;
-    }
-
-    .dataTables_paginate .paginate_button:hover {
-      background: linear-gradient(135deg, #FF9999 0%, #FFB6B6 100%) !important;
-      border-color: #FF9999 !important;
-      color: #2c3e50 !important;
-      transform: translateY(-1px) !important;
-      box-shadow: 0 4px 8px rgba(255, 153, 153, 0.4) !important;
-    }
-
-    .dataTables_paginate .paginate_button.current {
-      background: linear-gradient(135deg, #FF9999 0%, #FF7F7F 100%) !important;
-      border-color: #FF9999 !important;
-      color: #2c3e50 !important;
-      box-shadow: 0 4px 8px rgba(255, 153, 153, 0.5) !important;
-    }
-
-    .dataTables_paginate .paginate_button.disabled {
-      background: rgba(52, 73, 94, 0.5) !important;
-      border-color: rgba(255, 255, 255, 0.1) !important;
-      color: rgba(255, 255, 255, 0.4) !important;
-      cursor: not-allowed !important;
-      transform: none !important;
-      box-shadow: none !important;
-    }
-
-    /* Fix for pagination container */
-    .dataTables_info {
-      background: transparent !important;
-    }
-
-    .dataTables_length {
-      background: transparent !important;
-    }
-
-    .dataTables_filter {
-      background: transparent !important;
-    }
+    /* Remove conflicting old styles - use the orange theme from above */
   </style>
 </head>
 
@@ -665,7 +647,7 @@
         </div>
       </div>
       
-      <table id="writeOffTable" class="table table-striped table-bordered" style="width:100%">
+      <table id="writeOffTable" class="data-table table table-striped table-bordered" style="width:100%">
         <thead>
           <tr id="tableHeaders">
             <!-- Headers will be populated dynamically -->

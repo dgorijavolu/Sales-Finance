@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Portfolio Dashboard</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+  <!-- jQuery and DataTables -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+  
+  <!-- DataTables Extensions -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">   
+  
+  <!-- Centralized Configuration -->
+  <script src="config.js"></script>   
+  
+  <style>
+    /* Header styles */
+    .top-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      padding: 5px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FFFFFF;
+      font-size: 14px;
+    }
+
+    .user-info i {
+      color: #f39c12;
+    }
+
+    .sign-in-btn, .sign-out-btn {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+
+    .sign-in-btn:hover, .sign-out-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+    }
+
+    .sign-out-btn {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    }
+
+    .sign-out-btn:hover {
+      background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+      box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+    }
+
+    /* Main content styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8f9fa;
+      color: #2c3e50;
+      min-height: 100vh;
+      margin: 0;
+      padding-top: 60px;
+    }
+
+    .container {
+      width: 100%;
+      margin: 0;
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+
+    .upload-btn {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+    }
+
+    .upload-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Page Header */
+    .page-header {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: #7f8c8d;
+      font-weight: 400;
+    }
+
+    /* Timesheet Reports Grid */
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .report-tile {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .report-tile:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .report-tile::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3498db, #e74c3c);
+    }
+
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .report-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+      line-height: 1.3;
+      flex: 1;
+      margin-right: 10px;
+    }
+
+    .report-star {
+      color: #bdc3c7;
+      font-size: 20px;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .report-star.active {
+      color: #f39c12;
+    }
+
+    .report-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      margin: 20px auto;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ecf0f1 0%, #d5dbdb 100%);
+      position: relative;
+    }
+
+    .report-icon i {
+      font-size: 32px;
+      color: #7f8c8d;
+    }
+
+    .report-icon::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #e74c3c;
+      border-radius: 50%;
+      top: 5px;
+      right: 5px;
+      border: 3px solid white;
+    }
+
+    .report-meta {
+      font-size: 12px;
+      color: #95a5a6;
+      text-align: center;
+    }
+
+    /* Status message */
+    .status-message {
+      text-align: center;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 500;
+      display: none;
+    }
+
+    .status-loading {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: white;
+    }
+
+    .status-success {
+      background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+      color: white;
+    }
+
+    .status-error {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: white;
+    }
+
+    /* Modal for displaying individual report data */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 2% auto;
+      padding: 0;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 1200px;
+      max-height: 90vh;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .close {
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+
+    .close:hover {
+      opacity: 0.7;
+    }
+
+    .modal-body {
+      padding: 30px;
+      max-height: calc(90vh - 140px);
+      overflow-y: auto;
+    }
+
+    /* Data Table in Modal */
+    .data-table-container {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .data-table th {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      color: #FFFFFF;
+      padding: 15px 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .data-table td {
+      padding: 12px;
+      border-bottom: 1px solid #ecf0f1;
+      color: #2c3e50;
+      font-size: 14px;
+    }
+
+    .data-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .data-table tr:nth-child(even) {
+      background: #fdfdfd;
+    }
+
+    /* DataTables Pagination and Info Styling */
+    .dataTables_wrapper .dataTables_paginate {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 20px;
+      font-size: 18px;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      background: #f39c12;
+      border: 2px solid #e67e22;
+      color: #fff !important;
+      font-size: 18px;
+      margin: 0 6px;
+      padding: 6px 18px;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+      cursor: pointer;
+      min-width: 38px;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(243, 156, 18, 0.08);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+      background: #e67e22;
+      color: #fff !important;
+      font-weight: bold;
+      border: 2px solid #f39c12;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(230, 126, 34, 0.15);
+      outline: none;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
+      background: #e67e22;
+      color: #fff !important;
+      border: 2px solid #f39c12;
+      box-shadow: 0 2px 8px rgba(230, 126, 34, 0.12);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .ellipsis {
+      color: #2c3e50;
+      font-size: 20px;
+      margin: 0 8px;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+      color: #7f8c8d;
+      font-size: 16px;
+      text-align: left;
+      margin-bottom: 10px;
+      margin-top: 10px;
+    }
+
+    /* Remove default list style for pagination */
+    .dataTables_wrapper .dataTables_paginate ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      gap: 0;
+    }
+
+    /* Hide bullet points for pagination */
+    .dataTables_wrapper .dataTables_paginate ul li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Hide DataTables default background on disabled buttons */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+      color: #bdc3c7 !important;
+      background: none !important;
+      cursor: not-allowed !important;
+      opacity: 0.5;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .reports-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-content {
+        width: 95%;
+        margin: 5% auto;
+      }
+
+      .modal-body {
+        padding: 20px;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 8px 6px;
+        font-size: 12px;
+      }
+
+      .dataTables_wrapper .dataTables_paginate {
+        font-size: 14px;
+      }
+
+      .dataTables_wrapper .dataTables_paginate .paginate_button {
+        font-size: 14px;
+        padding: 4px 8px;
+      }
+
+      .dataTables_wrapper .dataTables_info {
+        font-size: 13px;
+      }
+    }
+
+    /* Loading animation */
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Sub-reports grid styling */
+    .sub-reports-container {
+      padding: 20px 0;
+    }
+
+    .sub-reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .sub-report-item {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .sub-report-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    }
+
+    .sub-report-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .sub-report-icon {
+      font-size: 24px;
+      color: #3498db;
+      margin-bottom: 10px;
+    }
+
+    .back-button-container {
+      margin-bottom: 20px;
+    }
+
+    .back-button {
+      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    }
+    /* Chart container in modal */
+    .chart-container {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 300px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Top Header -->
+  <div class="top-header">
+    <div class="header-left">
+      <!-- Title removed to match other pages -->
+    </div>
+    <div class="header-right">
+      <div id="userInfo" class="user-info" style="display: none;">
+        <i class="fas fa-user"></i>
+        <span id="userName">User</span>
+      </div>
+      <button id="signOutBtn" class="sign-out-btn" onclick="globalSignOut()" style="display: none;">
+        <i class="fas fa-sign-out-alt"></i>
+        Sign Out
+      </button>
+      <button class="upload-btn" onclick="loadData()">
+        <i class="fas fa-download"></i>
+        Load Data
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Status Message -->
+    <div id="statusMessage" class="status-message"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <i class="fas fa-chart-pie"></i>
+        Project Portfolio Dashboard
+      </h1>
+      <p class="page-subtitle">Comprehensive Analytics Suite - Click on any report tile to view detailed sub-reports and analytics</p>
+    </div>
+
+    <!-- Project Portfolio Reports Grid -->
+    <div class="reports-grid" id="reportsGrid">
+      <div class="report-tile" onclick="openReportModal('timesheet-reports')">
+        <div class="report-header">
+          <div class="report-title">Timesheet Reports</div>
+          <div class="report-star" onclick="toggleStar(event, this)">
+            <i class="fas fa-star"></i>
+          </div>
+        </div>
+        <div class="report-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="report-meta">4 Sub-Reports Available</div>
+      </div>
+
+      <div class="report-tile" onclick="openReportModal('billing-reports')">
+        <div class="report-header">
+          <div class="report-title">Billing Reports</div>
+          <div class="report-star" onclick="toggleStar(event, this)">
+            <i class="fas fa-star"></i>
+          </div>
+        </div>
+        <div class="report-icon">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div class="report-meta">5 Sub-Reports Available</div>
+      </div>
+
+      <div class="report-tile" onclick="openReportModal('resource-utilization')">
+        <div class="report-header">
+          <div class="report-title">Resource Utilization</div>
+          <div class="report-star" onclick="toggleStar(event, this)">
+            <i class="fas fa-star"></i>
+          </div>
+        </div>
+        <div class="report-icon">
+          <i class="fas fa-users-cog"></i>
+        </div>
+        <div class="report-meta">3 Sub-Reports Available</div>
+      </div>
+
+      <div class="report-tile" onclick="openReportModal('client-reports')">
+        <div class="report-header">
+          <div class="report-title">Client Reports</div>
+          <div class="report-star" onclick="toggleStar(event, this)">
+            <i class="fas fa-star"></i>
+          </div>
+        </div>
+        <div class="report-icon">
+          <i class="fas fa-handshake"></i>
+        </div>
+        <div class="report-meta">6 Sub-Reports Available</div>
+      </div>
+
+      <div class="report-tile" onclick="openReportModal('planned-vs-logged')">
+        <div class="report-header">
+          <div class="report-title">Work Planned Vs Hours Logged Reports</div>
+          <div class="report-star" onclick="toggleStar(event, this)">
+            <i class="fas fa-star"></i>
+          </div>
+        </div>
+        <div class="report-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="report-meta">2 Sub-Reports Available</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Individual Report Data -->
+  <div id="reportModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Report Details</h2>
+        <span class="close" onclick="closeModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <!-- Sub-Reports Selection -->
+        <div id="subReportsContainer" class="sub-reports-container">
+          <div class="sub-reports-grid" id="subReportsGrid">
+            <!-- Sub-reports will be populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Chart Container (shown when sub-report is selected) -->
+        <div id="chartContainer" class="chart-container" style="display: none;">
+          <div class="chart-title">
+            <i class="fas fa-chart-bar"></i>
+            <span id="chartTitle">Report Analytics</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="reportChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Data Table Container (shown when sub-report is selected) -->
+        <div id="dataTableContainer" class="data-table-container" style="display: none;">
+          <div class="back-button-container">
+            <button onclick="showSubReports()" class="back-button">
+              <i class="fas fa-arrow-left"></i> Back to Sub-Reports
+            </button>
+          </div>
+          <table id="reportDataTable" class="data-table table table-striped table-bordered" style="width:100%;">
+            <thead id="reportTableHead">
+              <!-- Headers will be populated dynamically -->
+            </thead>
+            <tbody id="reportTableBody">
+              <!-- Data will be populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Chart instance for modal
+    let reportChart = null;
+    let currentMainReport = '';
+
+    // Sub-reports configuration
+    const reportCategories = {
+      'timesheet-reports': {
+        title: 'Timesheet Reports',
+        subReports: [
+          { id: 'avg-billing-hours-project', title: 'Average billing hours by project', icon: 'fas fa-chart-bar' },
+          { id: 'avg-billing-hours-resource', title: 'Average billing hours by resource', icon: 'fas fa-user-clock' },
+          { id: 'billing-nonbilling-project', title: 'Billing-non-billing hours by project', icon: 'fas fa-balance-scale' },
+          { id: 'effective-roi-project', title: 'Effective ROI per project', icon: 'fas fa-chart-line' }
+        ]
+      },
+      'billing-reports': {
+        title: 'Billing Reports',
+        subReports: [
+          { id: 'billable-amount-project', title: 'Billable amount by project', icon: 'fas fa-dollar-sign' },
+          { id: 'avg-billable-amount-project', title: 'Average billable amount by project', icon: 'fas fa-calculator' },
+          { id: 'avg-billable-amount-resource', title: 'Average billable amount by resource', icon: 'fas fa-user-tie' },
+          { id: 'effective-roi-project-billing', title: 'Effective ROI per project', icon: 'fas fa-chart-line' },
+          { id: 'revenue-calculation-table', title: 'Revenue calculation table', icon: 'fas fa-table' }
+        ]
+      },
+      'resource-utilization': {
+        title: 'Resource Utilization',
+        subReports: [
+          { id: 'resource-util-project', title: 'Resource utilization by project', icon: 'fas fa-project-diagram' },
+          { id: 'resource-util-pivot', title: 'Resource utilization pivot view', icon: 'fas fa-th' },
+          { id: 'resource-util-rate', title: 'Resource utilization rate', icon: 'fas fa-percentage' }
+        ]
+      },
+      'client-reports': {
+        title: 'Client Reports',
+        subReports: [
+          { id: 'client-wise-analysis', title: 'Client wise analysis', icon: 'fas fa-chart-pie' },
+          { id: 'client-wise-revenue', title: 'Client wise revenue', icon: 'fas fa-money-bill-wave' },
+          { id: 'group-wise-revenue', title: 'Group wise revenue', icon: 'fas fa-users' },
+          { id: 'top-5-billable-clients', title: 'Top 5 billable Clients', icon: 'fas fa-trophy' },
+          { id: 'top-5-billable-groups', title: 'Top 5 billable groups', icon: 'fas fa-medal' },
+          { id: 'average-hourly-rate', title: 'Average hourly rate', icon: 'fas fa-clock' }
+        ]
+      },
+      'planned-vs-logged': {
+        title: 'Work Planned Vs Hours Logged Reports',
+        subReports: [
+          { id: 'user-wise-estimated-efforts', title: 'User wise estimated Vs efforts spent', icon: 'fas fa-user-chart' },
+          { id: 'hours-planned-vs-spent', title: 'Hours Planned vs Hours Spent', icon: 'fas fa-clock' }
+        ]
+      }
+    };
+
+    // Mock data for different sub-reports
+    const subReportData = {
+      'avg-billing-hours-project': {
+        title: 'Average Billing Hours by Project',
+        chartTitle: 'Project Billing Hours Analysis',
+        data: [
+          { Project: 'Project Alpha', AvgBillingHours: 7.5, TotalHours: 160, BillingRate: '85%' },
+          { Project: 'Project Beta', AvgBillingHours: 6.8, TotalHours: 140, BillingRate: '75%' },
+          { Project: 'Project Gamma', AvgBillingHours: 8.2, TotalHours: 180, BillingRate: '92%' },
+          { Project: 'Project Delta', AvgBillingHours: 5.9, TotalHours: 120, BillingRate: '68%' },
+          { Project: 'Project Epsilon', AvgBillingHours: 7.8, TotalHours: 175, BillingRate: '88%' }
+        ]
+      },
+      'avg-billing-hours-resource': {
+        title: 'Average Billing Hours by Resource',
+        chartTitle: 'Resource Billing Performance',
+        data: [
+          { Resource: 'John Smith', AvgBillingHours: 7.2, Utilization: '90%', Project: 'Project Alpha' },
+          { Resource: 'Sarah Johnson', AvgBillingHours: 6.5, Utilization: '81%', Project: 'Project Beta' },
+          { Resource: 'Mike Davis', AvgBillingHours: 8.1, Utilization: '95%', Project: 'Project Gamma' },
+          { Resource: 'Lisa Chen', AvgBillingHours: 7.8, Utilization: '87%', Project: 'Project Delta' },
+          { Resource: 'Tom Wilson', AvgBillingHours: 6.9, Utilization: '78%', Project: 'Project Epsilon' }
+        ]
+      },
+      'billing-nonbilling-project': {
+        title: 'Billing vs Non-Billing Hours by Project',
+        chartTitle: 'Project Billing Breakdown',
+        data: [
+          { Project: 'Project Alpha', BillingHours: 320, NonBillingHours: 80, TotalHours: 400, BillingRatio: '80%' },
+          { Project: 'Project Beta', BillingHours: 280, NonBillingHours: 120, TotalHours: 400, BillingRatio: '70%' },
+          { Project: 'Project Gamma', BillingHours: 360, NonBillingHours: 40, TotalHours: 400, BillingRatio: '90%' },
+          { Project: 'Project Delta', BillingHours: 240, NonBillingHours: 160, TotalHours: 400, BillingRatio: '60%' },
+          { Project: 'Project Epsilon', BillingHours: 300, NonBillingHours: 100, TotalHours: 400, BillingRatio: '75%' }
+        ]
+      },
+      'billable-amount-project': {
+        title: 'Billable Amount by Project',
+        chartTitle: 'Project Revenue Analysis',
+        data: [
+          { Project: 'Project Alpha', BillableAmount: 45000, Hours: 320, Rate: 140.625 },
+          { Project: 'Project Beta', BillableAmount: 38000, Hours: 280, Rate: 135.71 },
+          { Project: 'Project Gamma', BillableAmount: 52000, Hours: 360, Rate: 144.44 },
+          { Project: 'Project Delta', BillableAmount: 32000, Hours: 240, Rate: 133.33 },
+          { Project: 'Project Epsilon', BillableAmount: 42000, Hours: 300, Rate: 140.00 }
+        ]
+      },
+      'client-wise-analysis': {
+        title: 'Client Wise Analysis',
+        chartTitle: 'Client Performance Overview',
+        data: [
+          { Client: 'ABC Corp', Revenue: 125000, Projects: 3, Satisfaction: '95%', Status: 'Active' },
+          { Client: 'XYZ Ltd', Revenue: 98000, Projects: 2, Satisfaction: '87%', Status: 'Active' },
+          { Client: 'Tech Solutions', Revenue: 156000, Projects: 4, Satisfaction: '92%', Status: 'Active' },
+          { Client: 'Digital Inc', Revenue: 78000, Projects: 2, Satisfaction: '89%', Status: 'Completed' },
+          { Client: 'Innovation Co', Revenue: 203000, Projects: 5, Satisfaction: '98%', Status: 'Active' }
+        ]
+      }
+    };
+
+    // Load data function (placeholder)
+    function loadData() {
+      showStatus('success', 'Project Portfolio data loaded successfully!');
+    }
+
+    // Toggle star functionality
+    function toggleStar(event, starElement) {
+      event.stopPropagation();
+      starElement.classList.toggle('active');
+    }
+
+    // Open report modal and show sub-reports
+    function openReportModal(reportType) {
+      const category = reportCategories[reportType];
+      if (!category) return;
+
+      currentMainReport = reportType;
+
+      // Set modal title
+      document.getElementById('modalTitle').textContent = category.title;
+
+      // Show sub-reports
+      showSubReports();
+
+      // Show modal
+      document.getElementById('reportModal').style.display = 'block';
+    }
+
+    // Show sub-reports selection
+    function showSubReports() {
+      const category = reportCategories[currentMainReport];
+      if (!category) return;
+
+      // Hide chart and table containers
+      document.getElementById('chartContainer').style.display = 'none';
+      document.getElementById('dataTableContainer').style.display = 'none';
+
+      // Show sub-reports container
+      document.getElementById('subReportsContainer').style.display = 'block';
+
+      // Populate sub-reports grid
+      const subReportsGrid = document.getElementById('subReportsGrid');
+      subReportsGrid.innerHTML = '';
+
+      category.subReports.forEach(subReport => {
+        const subReportElement = document.createElement('div');
+        subReportElement.className = 'sub-report-item';
+        subReportElement.onclick = () => openSubReport(subReport.id);
+        
+        subReportElement.innerHTML = `
+          <div class="sub-report-icon">
+            <i class="${subReport.icon}"></i>
+          </div>
+          <div class="sub-report-title">${subReport.title}</div>
+        `;
+        
+        subReportsGrid.appendChild(subReportElement);
+      });
+    }
+
+    // Open specific sub-report
+    function openSubReport(subReportId) {
+      const report = subReportData[subReportId];
+      if (!report) {
+        // Show placeholder data for reports without mock data
+        showPlaceholderReport(subReportId);
+        return;
+      }
+
+      // Hide sub-reports container
+      document.getElementById('subReportsContainer').style.display = 'none';
+
+      // Set chart title
+      document.getElementById('chartTitle').textContent = report.chartTitle;
+
+      // Create chart and table
+      createReportChart(report.data, subReportId);
+      createReportTable(report.data);
+
+      // Show chart and table containers
+      document.getElementById('chartContainer').style.display = 'block';
+      document.getElementById('dataTableContainer').style.display = 'block';
+    }
+
+    // Show placeholder for reports without data
+    function showPlaceholderReport(subReportId) {
+      // Hide sub-reports container
+      document.getElementById('subReportsContainer').style.display = 'none';
+
+      // Create placeholder data
+      const placeholderData = [
+        { Item: 'Sample Data 1', Value: 100, Category: 'Category A', Status: 'Active' },
+        { Item: 'Sample Data 2', Value: 150, Category: 'Category B', Status: 'Pending' },
+        { Item: 'Sample Data 3', Value: 200, Category: 'Category C', Status: 'Completed' },
+        { Item: 'Sample Data 4', Value: 175, Category: 'Category A', Status: 'Active' },
+        { Item: 'Sample Data 5', Value: 125, Category: 'Category B', Status: 'Active' }
+      ];
+
+      // Set chart title
+      const reportTitle = subReportId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      document.getElementById('chartTitle').textContent = reportTitle + ' Analysis';
+
+      // Create chart and table
+      createReportChart(placeholderData, subReportId);
+      createReportTable(placeholderData);
+
+      // Show chart and table containers
+      document.getElementById('chartContainer').style.display = 'block';
+      document.getElementById('dataTableContainer').style.display = 'block';
+    }
+
+    // Create chart for report data
+    function createReportChart(data, reportType) {
+      const ctx = document.getElementById('reportChart').getContext('2d');
+      
+      // Destroy existing chart
+      if (reportChart) {
+        reportChart.destroy();
+      }
+
+      let chartConfig = getChartConfig(data, reportType);
+      reportChart = new Chart(ctx, chartConfig);
+    }
+
+    // Get chart configuration based on report type
+    function getChartConfig(data, reportType) {
+      let config = {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Values',
+            data: [],
+            backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#34495e'],
+            borderColor: ['#2980b9', '#c0392b', '#27ae60', '#e67e22', '#8e44ad', '#16a085', '#2c3e50'],
+            borderWidth: 2,
+            borderRadius: 6,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  if (reportType.includes('amount') || reportType.includes('revenue')) {
+                    return '$' + value.toLocaleString();
+                  }
+                  return value;
+                }
+              }
+            }
+          }
+        }
+      };
+
+      // Customize based on available data structure
+      if (data[0].Project) {
+        config.data.labels = data.map(d => d.Project);
+        const valueKey = Object.keys(data[0]).find(key => 
+          typeof data[0][key] === 'number' && key !== 'Hours'
+        );
+        config.data.datasets[0].data = data.map(d => d[valueKey]);
+        config.data.datasets[0].label = valueKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+      } else if (data[0].Resource) {
+        config.data.labels = data.map(d => d.Resource);
+        const valueKey = Object.keys(data[0]).find(key => 
+          typeof data[0][key] === 'number'
+        );
+        config.data.datasets[0].data = data.map(d => d[valueKey]);
+        config.data.datasets[0].label = valueKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+      } else if (data[0].Client) {
+        config.data.labels = data.map(d => d.Client);
+        config.data.datasets[0].data = data.map(d => d.Revenue);
+        config.data.datasets[0].label = 'Revenue';
+      } else {
+        // Default fallback
+        config.data.labels = data.map((d, index) => d.Item || `Item ${index + 1}`);
+        config.data.datasets[0].data = data.map(d => d.Value || 100);
+        config.data.datasets[0].label = 'Value';
+      }
+
+      return config;
+    }
+
+    // Create data table for report
+    function createReportTable(data) {
+      const tableHead = document.getElementById('reportTableHead');
+      const tableBody = document.getElementById('reportTableBody');
+
+      // Destroy existing DataTable
+      if (window.$ && $.fn.DataTable && $.fn.DataTable.isDataTable('#reportDataTable')) {
+        $('#reportDataTable').DataTable().destroy();
+      }
+
+      // Clear existing content
+      tableHead.innerHTML = '';
+      tableBody.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="100%" style="text-align: center; color: #7f8c8d;">No data available</td></tr>';
+        return;
+      }
+
+      // Create headers
+      const headers = Object.keys(data[0]);
+      const trHead = document.createElement('tr');
+      headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        trHead.appendChild(th);
+      });
+      tableHead.appendChild(trHead);
+
+      // Create rows
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        headers.forEach(header => {
+          const td = document.createElement('td');
+          let value = row[header];
+          
+          // Format values based on type
+          if (typeof value === 'number') {
+            if (header.toLowerCase().includes('amount') || header.toLowerCase().includes('revenue')) {
+              value = '$' + value.toLocaleString();
+            } else if (header.toLowerCase().includes('rate') && value < 1000) {
+              value = '$' + value.toFixed(2);
+            } else {
+              value = value.toLocaleString();
+            }
+          }
+          
+          td.textContent = value || '-';
+          tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+      });
+
+      // Initialize DataTable
+      setTimeout(() => {
+        $('#reportDataTable').DataTable({
+          responsive: true,
+          pageLength: 10,
+          lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+          dom: 'Blfrtip',
+          buttons: [
+            {
+              extend: 'excel',
+              text: '<i class="fas fa-file-excel"></i> Excel',
+              className: 'btn btn-success btn-sm'
+            },
+            {
+              extend: 'pdf',
+              text: '<i class="fas fa-file-pdf"></i> PDF',
+              className: 'btn btn-danger btn-sm'
+            }
+          ],
+          language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search all columns...",
+            lengthMenu: "Show _MENU_ records per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ records",
+            paginate: {
+              first: "First",
+              last: "Last",
+              next: "Next",
+              previous: "Previous"
+            }
+          },
+          order: [[0, 'asc']]
+        });
+      }, 100);
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('reportModal').style.display = 'none';
+      
+      // Destroy existing chart
+      if (reportChart) {
+        reportChart.destroy();
+        reportChart = null;
+      }
+
+      // Destroy existing DataTable
+      if (window.$ && $.fn.DataTable && $.fn.DataTable.isDataTable('#reportDataTable')) {
+        $('#reportDataTable').DataTable().destroy();
+      }
+
+      // Reset to sub-reports view
+      currentMainReport = '';
+      document.getElementById('subReportsContainer').style.display = 'block';
+      document.getElementById('chartContainer').style.display = 'none';
+      document.getElementById('dataTableContainer').style.display = 'none';
+    }
+
+    // Utility functions
+    function showStatus(type, message) {
+      const statusDiv = document.getElementById('statusMessage');
+      statusDiv.className = `status-message status-${type}`;
+      statusDiv.textContent = message;
+      statusDiv.style.display = 'block';
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        statusDiv.style.display = 'none';
+      }, 3000);
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('reportModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      showStatus('success', 'Project Portfolio Dashboard loaded successfully!');
+    });
+  </script>
+</body>
+</html>

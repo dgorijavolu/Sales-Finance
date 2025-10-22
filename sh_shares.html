@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Share Transfer Timeline — Shareholding Infographic (FY Apr–Mar)</title>
+  <style>
+    /* Clean, infographic-style visual — at-a-glance readability */
+    :root{
+      --bg:#fbfdff;--card:#ffffff;--muted:#6b7280;--accent:#0b63d6;--soft:#e6f0ff;--green:#10b981;--pink:#ff6b6b;
+      --rajesh:#3b82f6; /* For Madala Rajesh */
+      --radha:#8b5cf6;
+      --sunitha:#9C27B0; /* Changed Sunitha to a purple shade */
+      --ramesh:#10b981; /* For Madala Ramesh */
+      --divya:#f59e0b;
+      --rao:#6366f1; /* For K Hari hara Rao */
+      --ramesh-trust: #0f935f; /* A darker green for Ramesh Trust */
+      --sunitha-trust: #b75cd6; /* A lighter purple for Sunitha Trust */
+      
+      /* New event background colors */
+      --new-issue-bg:#e0f2f1; /* Light teal */
+      --gift-bg:#e3f2fd; /* Light blue */
+      --consideration-bg:#fff3e0; /* Light orange */
+      
+      /* New event border colors */
+      --new-issue-border:#4db6ac;
+      --gift-border:#64b5f6;
+      --consideration-border:#ffb74d;
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{background:linear-gradient(180deg,#fbfdff 0%, #f3f7ff 100%);padding:28px;color:#08203a}
+    .container{max-width:1200px;margin:0 auto}
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+    header h1{margin:0;font-size:20px}
+    header p{margin:0;color:var(--muted);font-size:13px}
+
+    /* top summary ribbon */
+    .ribbon{display:flex;gap:12px;align-items:center;margin:18px 0;flex-wrap:wrap}
+    .ribbon .tile{background:var(--card);padding:12px 14px;border-radius:10px;box-shadow:0 6px 16px rgba(9,30,66,0.06);border:1px solid rgba(9,30,66,0.04)}
+    .tile h4{margin:0;font-size:13px;color:var(--muted)}
+    .tile p{margin:6px 0 0;font-weight:700;font-size:16px}
+
+    /* timeline grid - responsive layout */
+    .timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:10px}
+    .year-card{background:var(--card);padding:16px;border-radius:12px;display:flex;flex-direction:column;border:1px solid rgba(9,30,66,0.04);box-shadow:0 6px 16px rgba(9,30,66,0.06)}
+    .year-card.inactive{opacity:0.7;background:linear-gradient(135deg,#fafafa,#f5f5f5)}
+    .year-card .y{font-weight:800;color:var(--accent);font-size:14px;margin-bottom:4px}
+    .year-card .sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+
+    /* opening/closing balance sections */
+    .balance-section{display:flex;justify-content:space-between;align-items:center;margin:8px 0;padding:8px;background:#f8fafc;border-radius:6px}
+    .balance-label{font-size:11px;color:var(--muted);font-weight:600}
+    .balance-holders{display:flex;gap:6px;flex-wrap:wrap}
+
+    /* shareholder badges with consistent colors */
+    .holder-badge{padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;color:white;text-align:center;min-width:60px}
+    .holder-badge.rajesh{background:var(--rajesh)} /* For Madala Rajesh */
+    .holder-badge.radha{background:var(--radha)}
+    .holder-badge.sunitha{background:var(--sunitha)}
+    .holder-badge.ramesh{background:var(--ramesh)} /* For Madala Ramesh */
+    .holder-badge.divya{background:var(--divya)}
+    .holder-badge.rao{background:var(--rao)}
+    .holder-badge.ramesh-trust{background:var(--ramesh-trust)}
+    .holder-badge.sunitha-trust{background:var(--sunitha-trust)}
+    .holder-badge .name{display:block;font-size:10px}
+    .holder-badge .shares{display:block;font-size:12px;font-weight:700}
+
+    /* events section */
+    .events-section{flex:1;margin:12px 0}
+    .events-container{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:60px}
+    .event-box{background:var(--card);border:2px solid;border-radius:8px;padding:10px;text-align:center;min-width:100px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+    
+    .event-box.new-issue{border-color:var(--new-issue-border);background:var(--new-issue-bg);}
+    .event-box.gift{border-color:var(--gift-border);background:var(--gift-bg);}
+    .event-box.consideration{border-color:var(--consideration-border);background:var(--consideration-bg);}
+    
+    .event-type{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:2px}
+    .event-holder-name{font-size:15px;font-weight:700;color:#08203a;margin-bottom:4px} /* Increased font size for name */
+    .event-shares-label{font-size:10px;color:var(--muted);margin-bottom:2px}
+    .event-shares-value{font-size:12px;font-weight:700;color:#08203a}
+    .event-cert{font-size:10px;color:var(--muted);margin-top:2px}
+
+    .no-activity{text-align:center;color:var(--muted);font-style:italic;font-size:12px;padding:20px}
+
+    /* arrows - only for chained events */
+    .event-chain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;}
+    .arrow{font-size:16px;color:var(--muted);}
+
+    /* final snapshot */
+    .final{margin-top:18px;background:linear-gradient(90deg,#ffffff,#f7fbff);padding:14px;border-radius:12px;border:1px solid rgba(9,30,66,0.04);display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .final .list{display:flex;gap:8px;flex-wrap:wrap}
+    .final .item{background:var(--card);padding:8px 10px;border-radius:10px;min-width:100px;text-align:center;box-shadow:0 6px 12px rgba(9,30,66,0.04)}
+    .final .item h4{margin:0;font-size:13px;color:var(--muted)}
+    .final .item p{margin:6px 0 0;font-weight:800;font-size:16px}
+
+    /* legend */
+    .legend{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+    .legend .dot{width:12px;height:12px;border-radius:3px}
+
+    /* responsive adjustments */
+    @media (max-width:768px){
+      .timeline{grid-template-columns:1fr}
+      .balance-section{flex-direction:column;gap:8px;text-align:center}
+      .events-container{flex-direction:column}
+      .final{flex-direction:column;align-items:flex-start}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Share Transfer Timeline</h1>
+        <p>Shareholding Infographic — Fiscal years Apr &ndash; Mar (with opening/closing balances)</p>
+      </div>
+      <div style="text-align:right;color:var(--muted)">Period: <strong>FY 2003–04 to FY 2024–25</strong></div>
+    </header>
+
+    <!-- top ribbon summary -->
+    <div class="ribbon">
+      <div class="tile"><h4>Total Certificates</h4><p>4</p></div>
+      <div class="tile"><h4>Current Shareholders</h4><p>5</p></div>
+      <div class="tile"><h4>Total Shares</h4><p>21,818</p></div>
+      <div class="tile"><h4>Active Years</h4><p>8 of 20</p></div>
+    </div>
+
+    <!-- timeline grid: responsive layout -->
+    <div class="timeline" role="list">
+
+      <!-- FY 2003-04 -->
+      <article class="year-card" role="listitem" aria-labelledby="y2003">
+        <div class="y" id="y2003">F.Y. 2003–04</div>
+        <div class="sub">Initial shareholding & first gift</div>
+        
+        <!-- Opening Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Opening Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">0</span>
+            </div>
+            <div class="holder-badge ramesh">
+              <span class="name">Ramesh</span>
+              <span class="shares">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Events -->
+        <div class="events-section">
+          <div class="events-container">
+            <div class="event-chain">
+              <div class="event-box new-issue">
+                <div class="event-type">New Issue</div>
+                <div class="event-holder-name">Madala Rajesh</div>
+                <div class="event-shares-label">Shares:</div>
+                <div class="event-shares-value">2,000</div>
+                <div class="event-cert">SC # 1-2000</div>
+              </div>
+              <div class="arrow"></div>
+              <div class="event-box new-issue">
+                <div class="event-type">New Issue</div>
+                <div class="event-holder-name">Madala Ramesh</div>
+                <div class="event-shares-label">Shares:</div>
+                <div class="event-shares-value">10,000</div>
+                <div class="event-cert">SC # 2001-12000</div>
+              </div>
+              <div class="arrow"></div>
+              <div class="event-box gift">
+                <div class="event-type">Gift (from Ramesh)</div>
+                <div class="event-holder-name">K Radha Krishan</div>
+                <div class="event-shares-label">Shares:</div>
+                <div class="event-shares-value">10,000</div>
+                <div class="event-cert">SC # 2001-12000</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Closing Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Closing Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge radha">
+              <span class="name">Radha K.</span>
+              <span class="shares">10,000</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2004-05 to 2006-07 (Inactive Years) -->
+      <article class="year-card inactive" role="listitem">
+        <div class="y">F.Y. 2004–05 to 2006–07</div>
+        <div class="sub">No transactions (balances carried forward)</div>
+        
+        <div class="no-activity">
+          No share transfer activity during these years
+        </div>
+
+        <!-- Carried Forward Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Carried Forward:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge radha">
+              <span class="name">Radha K.</span>
+              <span class="shares">10,000</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2007-08 -->
+      <article class="year-card" role="listitem" aria-labelledby="y2007">
+        <div class="y" id="y2007">F.Y. 2007–08</div>
+        <div class="sub">New allotment to K Hari hara Rao</div>
+        
+        <!-- Opening Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Opening Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge radha">
+              <span class="name">Radha K.</span>
+              <span class="shares">10,000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Events -->
+        <div class="events-section">
+          <div class="events-container">
+            <div class="event-box new-issue">
+              <div class="event-type">New Allotment</div>
+              <div class="event-holder-name">K Hari hara Rao</div>
+              <div class="event-shares-label">Shares:</div>
+              <div class="event-shares-value">9,818</div>
+              <div class="event-cert">SC # 12,001-21,818</div>
+            </div>
+          </div>
+        </div>
+        <!-- Closing Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Closing Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+			<div class="holder-badge radha">
+              <span class="name">Radha K.</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">9,818</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2008-09 to 2012-13 (Inactive Years) -->
+      <article class="year-card inactive" role="listitem">
+        <div class="y">F.Y. 2008–09 to 2012–13</div>
+        <div class="sub">No transactions (balances carried forward)</div>
+        
+        <div class="no-activity">
+          No share transfer activity during these years
+        </div>
+
+        <!-- Carried Forward Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Carried Forward:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge radha">
+              <span class="name">Radha K.</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">9,818</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2013-14 -->
+      <article class="year-card" role="listitem" aria-labelledby="y2013">
+        <div class="y" id="y2013">F.Y. 2013–14</div>
+        <div class="sub">Gift from Radha Krishan to Sunitha</div>
+        
+        <!-- Opening Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Opening Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge radha">
+              <span class="name">Radha K.</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">9,818</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Events -->
+        <div class="events-section">
+          <div class="events-container">
+            <div class="event-box gift">
+              <div class="event-type">Gift</div>
+              <div class="event-holder-name">Madala Sunitha</div>
+              <div class="event-shares-label">Shares:</div>
+              <div class="event-shares-value">10,000</div>
+              <div class="event-cert">Radha K. → Sunitha</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Closing Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Closing Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">9,818</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2014-15 to 2018-19 (Inactive Years) -->
+      <article class="year-card inactive" role="listitem">
+        <div class="y">F.Y. 2014–15 to 2018–19</div>
+        <div class="sub">No transactions (balances carried forward)</div>
+        
+        <div class="no-activity">
+          No share transfer activity during these years
+        </div>
+
+        <!-- Carried Forward Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Carried Forward:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">9,818</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2019-20 -->
+      <article class="year-card" role="listitem" aria-labelledby="y2019">
+        <div class="y" id="y2019">F.Y. 2019–20</div>
+        <div class="sub">Consideration transfer to Ramesh</div>
+        
+        <!-- Opening Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Opening Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">9,818</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Events -->
+        <div class="events-section">
+          <div class="events-container">
+            <div class="event-box consideration">
+              <div class="event-type">Consideration</div>
+              <div class="event-holder-name">Madala Ramesh</div>
+              <div class="event-shares-label">Shares:</div>
+              <div class="event-shares-value">1,091</div>
+              <div class="event-cert">K Hari hara Rao → Ramesh</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Closing Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Closing Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">8,727</span>
+            </div>
+            <div class="holder-badge ramesh">
+              <span class="name">Ramesh</span>
+              <span class="shares">1,091</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2020-21 (Inactive Year) -->
+      <article class="year-card inactive" role="listitem">
+        <div class="y">F.Y. 2020–21</div>
+        <div class="sub">No transactions (balances carried forward)</div>
+        
+        <div class="no-activity">
+          No share transfer activity during this year
+        </div>
+
+        <!-- Carried Forward Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Carried Forward:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">8,727</span>
+            </div>
+            <div class="holder-badge ramesh">
+              <span class="name">Ramesh</span>
+              <span class="shares">1,091</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2021-22 -->
+      <article class="year-card" role="listitem" aria-labelledby="y2021">
+        <div class="y" id="y2021">F.Y. 2021–22</div>
+        <div class="sub">Partial transfers to Divya</div>
+        
+        <!-- Opening Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Opening Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">8,727</span>
+            </div>
+            <div class="holder-badge ramesh">
+              <span class="name">Ramesh</span>
+              <span class="shares">1,091</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Events -->
+        <div class="events-section">
+          <div class="events-container">
+            <div class="event-box consideration">
+              <div class="event-type">Consideration</div>
+              <div class="event-holder-name">Madala Divya</div>
+              <div class="event-shares-label">Shares:</div>
+              <div class="event-shares-value">162</div>
+              <div class="event-cert">K Hari hara Rao → Divya</div>
+            </div>
+            <div class="event-box consideration">
+              <div class="event-type">Consideration</div>
+              <div class="event-holder-name">Madala Divya</div>
+              <div class="event-shares-label">Shares:</div>
+              <div class="event-shares-value">275</div>
+              <div class="event-cert">K Hari hara Rao → Divya</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Closing Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Closing Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">8,290</span>
+            </div>
+            <div class="holder-badge ramesh">
+              <span class="name">Ramesh</span>
+              <span class="shares">1,091</span>
+            </div>
+            <div class="holder-badge divya">
+              <span class="name">Divya</span>
+              <span class="shares">437</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2022-23 (Share Certificate Splitting) -->
+      <article class="year-card inactive" role="listitem" aria-labelledby="y2022-split">
+        <div class="y" id="y2022-split">F.Y. 2022–23</div>
+        <div class="sub">Share Certificate Splitting (20.01.2023)</div>
+        
+        <!-- Opening Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Opening Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">8,290</span>
+            </div>
+            <div class="holder-badge ramesh">
+              <span class="name">Ramesh</span>
+              <span class="shares">1,091</span>
+            </div>
+            <div class="holder-badge divya">
+              <span class="name">Divya</span>
+              <span class="shares">437</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Events -->
+        <div class="events-section">
+          <div class="events-container">
+            <div class="event-box new-issue">
+              <div class="event-type">Certificate Split</div>
+              <div class="event-holder-name">K Hari hara Rao</div>
+              <div class="event-shares-label">Original SC: 12001-21818</div>
+              <div class="event-shares-value">New SC: 10 (655), 11 (7635)</div>
+              <div class="event-cert">No Transfer of Ownership</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Closing Balance (same as opening as no transfer occurred) -->
+        <div class="balance-section">
+          <div class="balance-label">Closing Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">8,290</span>
+            </div>
+            <div class="holder-badge ramesh">
+              <span class="name">Ramesh</span>
+              <span class="shares">1,091</span>
+            </div>
+            <div class="holder-badge divya">
+              <span class="name">Divya</span>
+              <span class="shares">437</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- FY 2022-23 (Transfers on 31.03.2023) -->
+      <article class="year-card" role="listitem" aria-labelledby="y2023-transfers">
+        <div class="y" id="y2023-transfers">F.Y. 2022–23</div>
+        <div class="sub">Final transfers completing current structure (31.03.2023)</div>
+        
+        <!-- Opening Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Opening Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rajesh">
+              <span class="name">Rajesh</span>
+              <span class="shares">2,000</span>
+            </div>
+            <div class="holder-badge sunitha">
+              <span class="name">Sunitha</span>
+              <span class="shares">10,000</span>
+            </div>
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">8,290</span>
+            </div>
+            <div class="holder-badge ramesh">
+              <span class="name">Ramesh</span>
+              <span class="shares">1,091</span>
+            </div>
+            <div class="holder-badge divya">
+              <span class="name">Divya</span>
+              <span class="shares">437</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Events -->
+        <div class="events-section">
+          <div class="events-container">
+            <div class="event-chain">
+              <div class="event-box gift">
+                <div class="event-type">Gift (from Rajesh)</div>
+                <div class="event-holder-name">M Ramesh F.P.Trust</div>
+                <div class="event-shares-label">Shares:</div>
+                <div class="event-shares-value">2,000</div>
+                <div class="event-cert">SC # 1-2000</div>
+              </div>
+              <div class="arrow"></div>
+                <div class="event-box gift">
+                <div class="event-type">Gift (from Ramesh)</div>
+                <div class="event-holder-name">M Ramesh F.P.Trust</div>
+                <div class="event-shares-label">Shares:</div>
+                <div class="event-shares-value">3,455</div>
+                <div class="event-cert">SC # 2001-5455</div>
+              </div>
+              <div class="arrow"></div>
+              <div class="event-box gift">
+                <div class="event-type">Gift (from Sunitha)</div>
+                <div class="event-holder-name">M Sunitha F.P.Trust</div>
+                <div class="event-shares-label">Shares:</div>
+                <div class="event-shares-value">6,545</div>
+                <div class="event-cert">SC # 5456-12000</div>
+              </div>
+              <div class="arrow"></div>
+              <div class="event-box consideration">
+              <div class="event-type">Consideration</div>
+              <div class="event-holder-name">Madala Divya</div>
+              <div class="event-shares-label">Shares:</div>
+              <div class="event-shares-value">655</div>
+              <div class="event-cert">K H H Rao → Divya (SC #10)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Closing Balance -->
+        <div class="balance-section">
+          <div class="balance-label">Closing Balance:</div>
+          <div class="balance-holders">
+            <div class="holder-badge rao">
+              <span class="name">K Hari hara Rao</span>
+              <span class="shares">7,635</span>
+            </div>
+            <div class="holder-badge ramesh-trust">
+              <span class="name">Ramesh F.P. Trust</span>
+              <span class="shares">5,455</span>
+            </div>
+            <div class="holder-badge sunitha-trust">
+              <span class="name">Sunitha F.P. Trust</span>
+              <span class="shares">6,545</span>
+            </div>
+            <div class="holder-badge ramesh">
+              <span class="name">Ramesh</span>
+              <span class="shares">1,091</span>
+            </div>
+            <div class="holder-badge divya">
+              <span class="name">Divya</span>
+              <span class="shares">1,092</span> <!-- 437 + 655 -->
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Legend -->
+    <div class="legend" aria-hidden="true">
+      <div style="display:flex;align-items:center;gap:8px"><div class="dot" style="background:var(--new-issue-border)"></div><div class="sub">New Issue / Split</div></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:8px"><div class="dot" style="background:var(--gift-border)"></div><div class="sub">Gift Transfer</div></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:8px"><div class="dot" style="background:var(--consideration-border)"></div><div class="sub">Consideration Transfer</div></div>
+      <div style="margin-left:16px;font-weight:600;color:var(--muted)">Each shareholder has consistent color coding across all years</div>
+    </div>
+
+    <!-- Final snapshot -->
+    <div class="final" role="region" aria-label="Final snapshot">
+      <div>
+        <strong style="font-size:14px">Current Shareholding — as on 31 Mar 2023</strong>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">Final distribution across all shareholders</div>
+      </div>
+      <div class="list">
+        <div class="item"><h4>K Hari hara Rao</h4><p>7,635</p></div>
+        <div class="item"><h4>Madala Sunitha F.P.Trust</h4><p>6,545</p></div>
+        <div class="item"><h4>Madala Ramesh F.P.Trust</h4><p>5,455</p></div>
+        <div class="item"><h4>Madala Ramesh</h4><p>1,091</p></div>
+        <div class="item"><h4>Madala Divya</h4><p>1,092</p></div>
+      </div>
+    </div>
+
+    <footer style="margin-top:14px;color:var(--muted);font-size:13px">Data accurate as of 31 March 2023.</footer>
+  </div>
+</body>
+</html>

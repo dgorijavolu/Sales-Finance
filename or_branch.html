@@ -22,6 +22,9 @@
   
   <!-- Centralized Configuration -->
   <script src="config.js"></script>
+
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
   
   <style>
     /* Header styles */
@@ -264,6 +267,7 @@
       margin-bottom: 20px;
     }
 
+
     /* Data Table */
     .data-table-container {
       background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
@@ -325,6 +329,96 @@
 
     .data-table tr:nth-child(even) {
       background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* DataTables Pagination and Info Styling */
+    .dataTables_wrapper .dataTables_paginate {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 20px;
+      font-size: 18px;
+      gap: 10px;
+      width: 100%;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      background: #f39c12;
+      border: 2px solid #e67e22;
+      color: #fff !important;
+      font-size: 18px;
+      margin: 0 6px;
+      padding: 6px 18px;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+      cursor: pointer;
+      min-width: 38px;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(243, 156, 18, 0.08);
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+      background: #e67e22;
+      color: #fff !important;
+      font-weight: bold;
+      border: 2px solid #f39c12;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(230, 126, 34, 0.15);
+      outline: none;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current) {
+      background: #e67e22;
+      color: #fff !important;
+      border: 2px solid #f39c12;
+      box-shadow: 0 2px 8px rgba(230, 126, 34, 0.12);
+    }
+    .dataTables_wrapper .dataTables_paginate .ellipsis {
+      color: #fff;
+      font-size: 20px;
+      margin: 0 8px;
+    }
+    .dataTables_wrapper .dataTables_info {
+      color: #BDC3C7;
+      font-size: 16px;
+      text-align: left;
+      margin-bottom: 10px;
+      margin-top: 10px;
+    }
+    /* Remove default list style for pagination */
+    .dataTables_wrapper .dataTables_paginate ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      gap: 0;
+    }
+    /* Hide bullet points for pagination */
+    .dataTables_wrapper .dataTables_paginate ul li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    /* Hide DataTables default background on disabled buttons */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+      color: #888 !important;
+      background: none !important;
+      cursor: not-allowed !important;
+      opacity: 0.5;
+    }
+    /* Responsive: pagination font smaller on mobile */
+    @media (max-width: 768px) {
+      .dataTables_wrapper .dataTables_paginate {
+        font-size: 14px;
+      }
+      .dataTables_wrapper .dataTables_paginate .paginate_button {
+        font-size: 14px;
+        padding: 4px 8px;
+      }
+      .dataTables_wrapper .dataTables_info {
+        font-size: 13px;
+      }
     }
 
     /* Responsive design */
@@ -478,13 +572,11 @@
         Outward Remittance Branch Details
       </div>
       <div style="overflow-x: auto;">
-        <table class="data-table">
-          <thead>
-            <tr id="tableHeaders">
-              <!-- Headers will be populated dynamically -->
-            </tr>
+        <table id="remittanceDataTable" class="data-table table table-striped table-bordered" style="width:100%;">
+          <thead id="remittanceTableHead">
+            <!-- Headers will be populated dynamically -->
           </thead>
-          <tbody id="tableBody">
+          <tbody id="remittanceTableBody">
             <!-- Data will be populated dynamically -->
           </tbody>
         </table>
@@ -1153,36 +1245,42 @@
 
     // Create remittance table
     function createRemittanceTable(data) {
-      const tableHeaders = document.getElementById('tableHeaders');
-      const tableBody = document.getElementById('tableBody');
-      
+      const tableHead = document.getElementById('remittanceTableHead');
+      const tableBody = document.getElementById('remittanceTableBody');
+
+      // Destroy existing DataTable if it exists
+      if (window.$ && window.$.fn && window.$.fn.DataTable && window.$.fn.DataTable.isDataTable && window.$.fn.DataTable.isDataTable('#remittanceDataTable')) {
+        $('#remittanceDataTable').DataTable().destroy();
+      }
+
       // Clear existing content
-      tableHeaders.innerHTML = '';
+      tableHead.innerHTML = '';
       tableBody.innerHTML = '';
 
-      if (data.length === 0) {
+      if (!data || data.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="100%" style="text-align: center; color: #BDC3C7;">No data available</td></tr>';
         return;
       }
 
       // Create headers
       const headers = Object.keys(data[0]);
+      const trHead = document.createElement('tr');
       headers.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header;
-        tableHeaders.appendChild(th);
+        trHead.appendChild(th);
       });
+      tableHead.appendChild(trHead);
 
       // Create rows
-      data.slice(0, 100).forEach(row => { // Limit to first 100 rows for performance
+      data.forEach(row => {
         const tr = document.createElement('tr');
         headers.forEach(header => {
           const td = document.createElement('td');
           let value = row[header];
-          
+
           // Format percentage values
           if (typeof value === 'number' && (header.toLowerCase().includes('%') || header.toLowerCase().includes('percent'))) {
-            // Convert decimal to percentage and format
             value = (value * 100).toFixed(2) + '%';
           }
           // Format currency values
@@ -1191,32 +1289,88 @@
           }
           // Format other numbers with proper decimal places
           else if (typeof value === 'number' && value !== 0) {
-            // Check if this might be a percentage based on the value range (between -10 and 10 could be percentage as decimal)
             if (value > -10 && value < 10 && value !== Math.floor(value)) {
-              // This might be a percentage stored as decimal, format it
               value = (value * 100).toFixed(2) + '%';
             } else {
-              // Regular number formatting
               value = value.toLocaleString();
             }
           }
-          
+
           td.textContent = value || '-';
           tr.appendChild(td);
         });
         tableBody.appendChild(tr);
       });
 
-      if (data.length > 100) {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.setAttribute('colspan', headers.length);
-        td.style.textAlign = 'center';
-        td.style.color = '#BDC3C7';
-        td.style.fontStyle = 'italic';
-        td.textContent = `... and ${data.length - 100} more rows`;
-        tr.appendChild(td);
-        tableBody.appendChild(tr);
+      // Defer DataTables JS load and init to after DOM is ready and table is built
+      if (!window.jQuery) {
+        const jqScript = document.createElement('script');
+        jqScript.src = 'https://code.jquery.com/jquery-3.7.1.min.js';
+        jqScript.onload = loadDataTablesScripts;
+        document.body.appendChild(jqScript);
+      } else {
+        loadDataTablesScripts();
+      }
+
+      function loadDataTablesScripts() {
+        if (!window.$.fn.DataTable) {
+          const dtScript = document.createElement('script');
+          dtScript.src = 'https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js';
+          dtScript.onload = function() {
+            const dtbScript = document.createElement('script');
+            dtbScript.src = 'https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js';
+            dtbScript.onload = initDataTable;
+            document.body.appendChild(dtbScript);
+          };
+          document.body.appendChild(dtScript);
+        } else {
+          initDataTable();
+        }
+      }
+
+      function initDataTable() {
+        $('#remittanceDataTable').DataTable({
+          responsive: true,
+          pageLength: 25,
+          lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+          dom: 'Blfrtip',
+          buttons: [
+            {
+              extend: 'excel',
+              text: '<i class="fas fa-file-excel"></i> Excel',
+              className: 'btn-sm'
+            },
+            {
+              extend: 'pdf',
+              text: '<i class="fas fa-file-pdf"></i> PDF',
+              className: 'btn-sm'
+            }
+          ],
+          language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search all columns...",
+            lengthMenu: "Show _MENU_ records per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ records",
+            infoEmpty: "No records available",
+            infoFiltered: "(filtered from _MAX_ total records)",
+            paginate: {
+              first: "First",
+              last: "Last",
+              next: "Next",
+              previous: "Previous"
+            }
+          },
+          order: [[0, 'asc']],
+          columnDefs: [
+            {
+              targets: '_all',
+              className: 'text-center'
+            }
+          ],
+          initComplete: function() {
+            $('.dataTables_filter input').attr('placeholder', 'Search all columns...');
+          }
+        });
       }
     }
 

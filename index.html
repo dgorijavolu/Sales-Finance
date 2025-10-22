@@ -375,7 +375,7 @@
       </div>
       <div class="nav-item" data-page="P&L" onclick="loadPage('PandL')">
         <i class="fas fa-chart-line nav-icon"></i>
-        <span class="nav-text">P&L</span>
+        <span class="nav-text">Project Portfolio</span>
       </div>
       <div class="nav-item" data-page="IRM" onclick="loadPage('IRM')">
         <i class="fas fa-shield-alt nav-icon"></i>
@@ -406,11 +406,11 @@
         <i class="fas fa-chevron-right expand-arrow"></i>
       </div>
       <div class="nav-submenu" id="share-holding-submenu">
-        <div class="nav-subitem" data-page="evoke-technologies" onclick="loadPage('evoke-technologies')">
+        <div class="nav-subitem" data-page="SH-shares" onclick="loadPage('SH_shares')">
           <i class="fas fa-building nav-icon"></i>
-          <span class="nav-text">Evoke Technologies</span>
+          <span class="nav-text">Shares</span>
         </div>
-         <div class="nav-subitem" data-page="subsidiaries" onclick="loadPage('SH_subsidiaries')">
+         <div class="nav-subitem" data-page="SH-subsidiaries" onclick="loadPage('SH_subsidiaries')">
           <i class="fas fa-network-wired nav-icon"></i>
           <span class="nav-text">Subsidiaries</span>
         </div>
@@ -577,7 +577,7 @@
           pageTitle.textContent = 'Softex BRC Dashboard';
           break;
         case 'P&L':
-          pageTitle.textContent = 'P&L Dashboard';
+          pageTitle.textContent = 'Project Portfolio Dashboard';
           break;
         case 'IRM':
           pageTitle.textContent = 'IRM Dashboard';
@@ -624,6 +624,12 @@
       else if (pageId === 'Softex_BRC') {
         contentFrame.src = 'softex-brc.html';
       } 
+      else if (pageId === 'SH_shares') {
+        contentFrame.src = 'sh_shares.html';
+      } 
+      else if (pageId === 'SH_subsidiaries') {
+        contentFrame.src = 'sh_subsidiaries.html';
+      } 
       else if (pageId === 'Write-off') {
         contentFrame.src = 'write-off.html';
       }
@@ -638,6 +644,12 @@
       }
       else if (pageId === 'Imports') {
         contentFrame.src = 'imports.html';
+      } 
+      else if (pageId === 'PandL') {
+        contentFrame.src = 'project-portfolio.html';
+      } 
+      else if (pageId === 'Documents-archive') {
+        contentFrame.src = 'documents-archive.html';
       } else {
         // For other pages, you can create specific HTML files or handle them as needed
         contentFrame.src = 'dashboard.html'; // Default for now

@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evoke Technologies - Corporate Structure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .main-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        .main-header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .entities-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .entity-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .entity-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .map-header {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        /* Poland Flag Background */
+        .poland-header {
+            background: linear-gradient(to bottom, #ffffff 0%, #ffffff 50%, #dc143c 50%, #dc143c 100%);
+        }
+        
+        .poland-header::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1;
+        }
+
+        /* Australia Flag Background */
+        .australia-header {
+            background: linear-gradient(135deg, #00008B 0%, #00008B 50%, #012169 50%, #012169 100%);
+            position: relative;
+        }
+
+        /* UK Flag Background */
+        .uk-header {
+            background: #012169;
+            position: relative;
+        }
+
+        .uk-header::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(to bottom, transparent 45%, #fff 45%, #fff 55%, transparent 55%),
+                linear-gradient(to right, transparent 45%, #fff 45%, #fff 55%, transparent 55%),
+                linear-gradient(45deg, transparent 48%, #C8102E 48%, #C8102E 52%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, #C8102E 48%, #C8102E 52%, transparent 52%);
+            opacity: 0.3;
+        }
+
+        .map-svg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.15;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .poland-header .header-content {
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .country-name {
+            font-size: 1.6em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .company-info {
+            font-size: 0.75em;
+            line-height: 1.5;
+        }
+
+        .company-info strong {
+            display: block;
+            margin-top: 6px;
+        }
+
+        .directors-section {
+            padding: 20px;
+            background: #f8f9fa;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '👥';
+            font-size: 1.3em;
+        }
+
+        .directors-grid {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .director-card {
+            text-align: center;
+        }
+
+        .director-photo {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: white;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .director-photo:hover {
+            transform: scale(1.1);
+        }
+
+        .director-name {
+            font-size: 0.75em;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .investment-section {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .investment-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #e9ecef;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            animation: fadeIn 0.5s ease;
+            flex-grow: 1;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            gap: 10px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.85em;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+            font-size: 0.85em;
+            text-align: right;
+        }
+
+        .expandable {
+            cursor: pointer;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-top: 12px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .expandable:hover {
+            border-color: #667eea;
+        }
+
+        .expandable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9em;
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .expandable.open .expandable-content {
+            max-height: 500px;
+            margin-top: 12px;
+        }
+
+        .expandable.open .arrow {
+            transform: rotate(180deg);
+        }
+
+        .arrow {
+            transition: transform 0.3s ease;
+        }
+
+        /* Country-specific map styles */
+        .poland-map { fill: #dc143c; }
+        .australia-map { fill: #ffffff; }
+        .uk-map { fill: #ffffff; }
+
+        @media (max-width: 1400px) {
+            .entities-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+            
+            .country-name {
+                font-size: 1.4em;
+            }
+            
+            .company-info {
+                font-size: 0.7em;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .entities-container {
+                grid-template-columns: 1fr;
+                max-width: 600px;
+            }
+            
+            .entity-card {
+                margin: 0 auto;
+            }
+            
+            .map-header {
+                height: 220px;
+            }
+            
+            .country-name {
+                font-size: 1.8em;
+            }
+            
+            .company-info {
+                font-size: 0.85em;
+            }
+            
+            .director-photo {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .info-label, .info-value {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-header">
+        <h1>🏢 Evoke Technologies Private Limited</h1>
+        <p>Global Corporate Structure & Investment Overview</p>
+    </div>
+
+    <div class="entities-container">
+        <!-- Poland Entity -->
+        <div class="entity-card">
+            <div class="map-header poland-header">
+                <svg class="map-svg" viewBox="0 0 200 200">
+                    <path class="poland-map" d="M140,60 L160,55 L170,60 L180,70 L185,85 L180,100 L170,110 L150,115 L130,110 L120,100 L115,90 L115,75 L125,65 Z"/>
+                    <circle cx="130" cy="90" r="5" fill="#dc143c"/>
+                </svg>
+                <div class="header-content">
+                    <div class="country-name">🇵🇱 POLAND</div>
+                    <div class="company-info">
+                        <strong>Evoke Technologies Spółka Z Ograniczoną Odpowiedzialnością</strong>
+                        UIN # HYWAZ20230972<br>
+                        Constitution Date: 24-Jun-2022<br>
+                        📍 ul. STRZEGOMSKA, 142A, Miejsc: WROCŁAW, 54-429, Woj. DOLNOŚLĄSKIE, POLAND
+                    </div>
+                </div>
+            </div>
+
+            <div class="directors-section">
+                <div class="section-title">Directors</div>
+                <div class="directors-grid">
+                    <div class="director-card">
+                        <div class="director-photo" title="Click to upload photo">👤</div>
+                        <div class="director-name">Madala Ramesh</div>
+                    </div>
+                    <div class="director-card">
+                        <div class="director-photo" title="Click to upload photo">👤</div>
+                        <div class="director-name">Madala Rajesh</div>
+                    </div>
+                    <div class="director-card">
+                        <div class="director-photo" title="Click to upload photo">👤</div>
+                        <div class="director-name">Harihara Rao</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="investment-section">
+                <div class="investment-tabs">
+                    <button class="tab-btn active" onclick="switchTab(event, 'poland-equity')">
+                        📊 Equity
+                    </button>
+                    <button class="tab-btn" onclick="switchTab(event, 'poland-debt')">
+                        💰 Debt
+                    </button>
+                </div>
+
+                <div id="poland-equity" class="tab-content active">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Amount Invested:</span>
+                            <span class="info-value">PLN 5,000</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">No of Shares:</span>
+                            <span class="info-value">100</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Value per Share:</span>
+                            <span class="info-value">PLN 50</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">% of Holding:</span>
+                            <span class="info-value">100%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Distinctive:</span>
+                            <span class="info-value">No</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="poland-debt" class="tab-content">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Loan Amount:</span>
+                            <span class="info-value">USD 1,000,000</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Initial Agreement Date:</span>
+                            <span class="info-value">15-May-2023</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Amended Agreement:</span>
+                            <span class="info-value">No</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Debenture:</span>
+                            <span class="info-value">No</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Coupon Rate:</span>
+                            <span class="info-value">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="expandable" onclick="toggleExpand(this)">
+                        <div class="expandable-header">
+                            <span>📅 Payment Schedule</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="expandable-content">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Debt given in 2023-24:</span>
+                                    <span class="info-value">Yes</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Debt given in 2024-25:</span>
+                                    <span class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Maturity Date:</span>
+                                    <span class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Redeemed Date:</span>
+                                    <span class="info-value">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Australia Entity -->
+        <div class="entity-card">
+            <div class="map-header australia-header">
+                <svg class="map-svg" viewBox="0 0 200 200">
+                    <path class="australia-map" d="M140,80 L160,75 L175,80 L185,95 L180,110 L170,120 L155,125 L140,125 L125,120 L115,110 L115,95 L120,85 Z"/>
+                    <circle cx="145" cy="115" r="5" fill="#fff"/>
+                    <polygon points="40,40 45,55 60,55 48,63 52,78 40,70 28,78 32,63 20,55 35,55" fill="#fff"/>
+                </svg>
+                <div class="header-content">
+                    <div class="country-name">🇦🇺 AUSTRALIA</div>
+                    <div class="company-info">
+                        <strong>Evoke Technologies Pty Ltd</strong>
+                        UIN # HYWAZ20231451<br>
+                        Constitution Date: 11-April-2023<br>
+                        📍 Suite 6, Level 2, 29-31, Lexington Drive, Bella Vista, NSW 2153, Australia
+                    </div>
+                </div>
+            </div>
+
+            <div class="directors-section">
+                <div class="section-title">Directors</div>
+                <div class="directors-grid">
+                    <div class="director-card">
+                        <div class="director-photo" title="Click to upload photo">👤</div>
+                        <div class="director-name">Madala Ramesh</div>
+                    </div>
+                    <div class="director-card">
+                        <div class="director-photo" title="Click to upload photo">👤</div>
+                        <div class="director-name">Harihara Rao</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="investment-section">
+                <div class="investment-tabs">
+                    <button class="tab-btn active" onclick="switchTab(event, 'aus-equity')">
+                        📊 Equity
+                    </button>
+                    <button class="tab-btn" onclick="switchTab(event, 'aus-debt')">
+                        💰 Debt
+                    </button>
+                </div>
+
+                <div id="aus-equity" class="tab-content active">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Amount Invested:</span>
+                            <span class="info-value">AUD 100</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">No of Shares:</span>
+                            <span class="info-value">100</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Value per Share:</span>
+                            <span class="info-value">AUD 1</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">% of Holding:</span>
+                            <span class="info-value">100%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Distinctive:</span>
+                            <span class="info-value">No</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aus-debt" class="tab-content">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Loan Amount:</span>
+                            <span class="info-value">AUD 1,000,000</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Initial Agreement Date:</span>
+                            <span class="info-value">15-Jun-2023</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Amended Agreement:</span>
+                            <span class="info-value">No</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Debenture:</span>
+                            <span class="info-value">No #</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Coupon Rate:</span>
+                            <span class="info-value">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="expandable" onclick="toggleExpand(this)">
+                        <div class="expandable-header">
+                            <span>📅 Payment Schedule</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="expandable-content">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Debt given in 2023-24:</span>
+                                    <span class="info-value">Yes</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Debt given in 2024-25:</span>
+                                    <span class="info-value">Yes</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Maturity Date:</span>
+                                    <span class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Redeemed Date:</span>
+                                    <span class="info-value">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- UK Entity -->
+        <div class="entity-card">
+            <div class="map-header uk-header">
+                <svg class="map-svg" viewBox="0 0 200 200">
+                    <path class="uk-map" d="M120,60 L135,55 L145,60 L150,70 L148,85 L140,95 L130,100 L120,98 L112,90 L110,75 L115,65 Z"/>
+                    <circle cx="130" cy="80" r="5" fill="#fff"/>
+                </svg>
+                <div class="header-content">
+                    <div class="country-name">🇬🇧 UNITED KINGDOM</div>
+                    <div class="company-info">
+                        <strong>Evoke Tech Services Limited</strong>
+                        UIN # HYWAZ20232428<br>
+                        Constitution Date: 25-May-2023<br>
+                        📍 2nd Floor, 85 Ludgate Hill, EC4M 7JW, United Kingdom
+                    </div>
+                </div>
+            </div>
+
+            <div class="directors-section">
+                <div class="section-title">Directors</div>
+                <div class="directors-grid">
+                    <div class="director-card">
+                        <div class="director-photo" title="Click to upload photo">👤</div>
+                        <div class="director-name">Madala Ramesh</div>
+                    </div>
+                    <div class="director-card">
+                        <div class="director-photo" title="Click to upload photo">👤</div>
+                        <div class="director-name">Harihara Rao</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="investment-section">
+                <div class="investment-tabs">
+                    <button class="tab-btn active" onclick="switchTab(event, 'uk-equity')">
+                        📊 Equity
+                    </button>
+                    <button class="tab-btn" onclick="switchTab(event, 'uk-debt')">
+                        💰 Debt
+                    </button>
+                </div>
+
+                <div id="uk-equity" class="tab-content active">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Amount Invested:</span>
+                            <span class="info-value">GBP 1,000</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">No of Shares:</span>
+                            <span class="info-value">1,000</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Value per Share:</span>
+                            <span class="info-value">GBP 1 each</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">% of Holding:</span>
+                            <span class="info-value">100%</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Distinctive:</span>
+                            <span class="info-value">No</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="uk-debt" class="tab-content">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Loan Amount:</span>
+                            <span class="info-value">GBP 1,000,000</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Initial Agreement Date:</span>
+                            <span class="info-value">25-Oct-2023</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Amended Loan Amount:</span>
+                            <span class="info-value">GBP 1,000,000</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Amended Agreement Date:</span>
+                            <span class="info-value">05-Aug-2024</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Debenture:</span>
+                            <span class="info-value">No</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Coupon Rate:</span>
+                            <span class="info-value">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="expandable" onclick="toggleExpand(this)">
+                        <div class="expandable-header">
+                            <span>📅 Payment Schedule</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="expandable-content">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Debt given in 2023-24:</span>
+                                    <span class="info-value">Yes</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Debt given in 2024-25:</span>
+                                    <span class="info-value">Yes</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Maturity Date:</span>
+                                    <span class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Redeemed Date:</span>
+                                    <span class="info-value">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(event, tabId) {
+            const card = event.target.closest('.entity-card');
+            const tabs = card.querySelectorAll('.tab-btn');
+            const contents = card.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            card.querySelector('#' + tabId).classList.add('active');
+        }
+
+        function toggleExpand(element) {
+            element.classList.toggle('open');
+        }
+
+        document.querySelectorAll('.director-photo').forEach(photo => {
+            photo.addEventListener('click', function() {
+                alert('Photo upload functionality would be implemented here.\nThis would open a file picker to select and upload director photos.');
+            });
+        });
+    </script>
+</body>
+</html>
