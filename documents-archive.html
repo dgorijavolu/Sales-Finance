@@ -636,6 +636,555 @@
         font-size: 12px;
       }
     }
+
+    /* Folder Tiles Styles - Project Portfolio Style */
+    .folders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .folder-tile {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .folder-tile::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3498db 0%, #e74c3c 50%, #f39c12 100%);
+    }
+
+    .folder-tile:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .folder-tile-header {
+      padding: 20px 20px 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .folder-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0;
+      flex: 1;
+    }
+
+    .folder-star {
+      color: #bdc3c7;
+      font-size: 20px;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .folder-star:hover {
+      color: #f39c12;
+    }
+
+    .folder-star.starred {
+      color: #f39c12;
+    }
+
+    .folder-tile-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      min-height: 180px;
+    }
+
+    .folder-icon-wrapper {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .folder-icon-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ecf0f1 0%, #d5dbdb 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .folder-tile:hover .folder-icon-circle {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    .folder-icon {
+      font-size: 48px;
+      color: #7f8c8d;
+      transition: all 0.3s ease;
+    }
+
+    .folder-tile:hover .folder-icon {
+      color: #FFFFFF;
+      transform: scale(1.1);
+    }
+
+    .folder-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #e74c3c;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    }
+
+    .folder-count {
+      font-size: 14px;
+      color: #95a5a6;
+      text-align: center;
+      margin: 0;
+    }
+
+    .folder-modified {
+      font-size: 12px;
+      color: #bdc3c7;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    /* File Card Styles */
+    .file-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .file-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      border-color: #3498db;
+    }
+
+    .file-card-icon {
+      font-size: 48px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .file-card-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #FFFFFF;
+      text-align: center;
+      word-wrap: break-word;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .file-card-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #BDC3C7;
+      padding: 8px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .file-card-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .file-action-btn {
+      flex: 1;
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .file-action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+    }
+
+    .file-action-btn.download {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+    }
+
+    .file-action-btn.download:hover {
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+    }
+
+    /* Loading State */
+    .loading-container {
+      text-align: center;
+      padding: 60px 20px;
+      color: #FFFFFF;
+    }
+
+    .loading-container i {
+      font-size: 48px;
+      color: #3498db;
+      animation: spin 1s linear infinite;
+    }
+
+    .loading-text {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #BDC3C7;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #BDC3C7;
+    }
+
+    .empty-state i {
+      font-size: 64px;
+      color: #95a5a6;
+      margin-bottom: 20px;
+    }
+
+    .empty-state-text {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .empty-state-subtext {
+      font-size: 14px;
+    }
+
+    /* Modal Popup Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      z-index: 9999;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-container {
+      background: #FFFFFF;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 1200px;
+      max-height: 85vh;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #3498db;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
+
+    .modal-body {
+      padding: 30px;
+      max-height: calc(85vh - 100px);
+      overflow-y: auto;
+      background: #f5f7fa;
+    }
+
+    /* Subfolders Section in Modal */
+    .modal-subfolders-section {
+      margin-bottom: 30px;
+    }
+
+    .modal-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-subfolders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .modal-subfolder-tile {
+      background: white;
+      border: 2px solid #ecf0f1;
+      border-radius: 8px;
+      padding: 20px 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .modal-subfolder-tile:hover {
+      border-color: #3498db;
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(52, 152, 219, 0.2);
+    }
+
+    .modal-subfolder-icon {
+      font-size: 40px;
+      color: #f39c12;
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .modal-subfolder-tile:hover .modal-subfolder-icon {
+      color: #3498db;
+      transform: scale(1.1);
+    }
+
+    .modal-subfolder-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 5px;
+      word-wrap: break-word;
+    }
+
+    .modal-subfolder-count {
+      font-size: 12px;
+      color: #7f8c8d;
+    }
+
+    /* Breadcrumb Navigation */
+    .modal-breadcrumb {
+      background: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .breadcrumb-item {
+      color: #3498db;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .breadcrumb-item:hover {
+      color: #2980b9;
+      text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+      color: #2c3e50;
+      cursor: default;
+      font-weight: 600;
+    }
+
+    .breadcrumb-item.active:hover {
+      text-decoration: none;
+    }
+
+    .breadcrumb-separator {
+      color: #bdc3c7;
+      font-size: 12px;
+    }
+
+    /* DataGrid Styles for Modal */
+    .modal-datagrid-container {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-datagrid {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .modal-datagrid thead {
+      background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    }
+
+    .modal-datagrid th {
+      color: white;
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-datagrid tbody tr {
+      border-bottom: 1px solid #ecf0f1;
+      transition: background 0.2s ease;
+    }
+
+    .modal-datagrid tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .modal-datagrid td {
+      padding: 15px;
+      color: #2c3e50;
+      font-size: 14px;
+    }
+
+    .modal-file-icon {
+      font-size: 20px;
+      margin-right: 10px;
+    }
+
+    .modal-action-btn {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      margin: 0 3px;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .modal-action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+    }
+
+    .modal-action-btn.download {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+    }
+
+    .modal-action-btn.download:hover {
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.4);
+    }
+
+    .modal-empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #7f8c8d;
+    }
+
+    .modal-empty-state i {
+      font-size: 64px;
+      color: #bdc3c7;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 
@@ -654,7 +1203,7 @@
         <i class="fas fa-sign-out-alt"></i>
         Sign Out
       </button>
-      <button class="upload-btn" onclick="initializeDocuments()">
+      <button class="upload-btn" onclick="loadSharedFolders()">
         <i class="fas fa-sync-alt"></i>
         Refresh
       </button>
@@ -671,35 +1220,11 @@
         <i class="fas fa-archive"></i>
         Documents Archive
       </h1>
-      <p class="page-subtitle">Upload, organize and manage all your important documents in one secure location</p>
+      <p class="page-subtitle">Comprehensive Document Management - View and download files from shared folders</p>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="stats-container">
-      <div class="stat-card">
-        <i class="fas fa-file stat-icon" style="color: #3498db;"></i>
-        <div class="stat-number" id="totalDocuments">0</div>
-        <div class="stat-label">Total Documents</div>
-      </div>
-      <div class="stat-card">
-        <i class="fas fa-folder stat-icon" style="color: #f39c12;"></i>
-        <div class="stat-number" id="totalFolders">0</div>
-        <div class="stat-label">Folders</div>
-      </div>
-      <div class="stat-card">
-        <i class="fas fa-hdd stat-icon" style="color: #27ae60;"></i>
-        <div class="stat-number" id="totalSize">0 MB</div>
-        <div class="stat-label">Storage Used</div>
-      </div>
-      <div class="stat-card">
-        <i class="fas fa-clock stat-icon" style="color: #e74c3c;"></i>
-        <div class="stat-number" id="lastUploaded">Never</div>
-        <div class="stat-label">Last Upload</div>
-      </div>
-    </div>
-
-    <!-- Upload Section -->
-    <div class="upload-section">
+    <!-- Upload Section (Hidden - Focus on shared folders) -->
+    <div class="upload-section" style="display: none;">
       <div class="section-title">
         <i class="fas fa-cloud-upload-alt"></i>
         Upload Documents
@@ -750,8 +1275,88 @@
       </div>
     </div>
 
-    <!-- Documents List Section -->
-    <div class="documents-section">
+    <!-- Shared OneDrive Folders Section -->
+    <div class="documents-section" style="background: transparent; box-shadow: none; border: none; padding: 0;">
+      <!-- Folders Grid -->
+      <div id="foldersGrid" class="folders-grid">
+        <!-- Folder tiles will be populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Files Grid Section (shown when folder is clicked) -->
+    <div class="documents-section" id="filesSection" style="display: none;">
+      <div class="section-title">
+        <span id="currentFolderName">Folder Files</span>
+        <button class="upload-btn" onclick="backToFolders()" style="margin-left: auto; font-size: 14px; background: linear-gradient(135deg, #95a5a6, #7f8c8d);">
+          <i class="fas fa-arrow-left"></i>
+          Back to Folders
+        </button>
+      </div>
+
+      <!-- Files Grid -->
+      <div id="filesGrid" class="files-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+        <!-- File cards will be populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Modal Popup for Files -->
+    <div class="modal-overlay" id="filesModal" onclick="closeFilesModal(event)">
+      <div class="modal-container" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h2 class="modal-title">
+            <i class="fas fa-folder-open"></i>
+            <span id="modalFolderName">Folder Files</span>
+          </h2>
+          <button class="modal-close" onclick="closeFilesModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Breadcrumb Navigation -->
+          <div class="modal-breadcrumb" id="modalBreadcrumb" style="display: none;">
+            <!-- Breadcrumb will be populated dynamically -->
+          </div>
+
+          <!-- Subfolders Section -->
+          <div class="modal-subfolders-section" id="modalSubfoldersSection" style="display: none;">
+            <h3 class="modal-section-title">
+              <i class="fas fa-folder"></i>
+              Subfolders
+            </h3>
+            <div class="modal-subfolders-grid" id="modalSubfoldersGrid">
+              <!-- Subfolder tiles will be populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Files Section -->
+          <div class="modal-files-section" id="modalFilesSection">
+            <h3 class="modal-section-title" id="modalFilesSectionTitle">
+              <i class="fas fa-file"></i>
+              Files
+            </h3>
+            <div class="modal-datagrid-container">
+              <table class="modal-datagrid" id="modalFilesTable">
+                <thead>
+                  <tr>
+                    <th>File Name</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Last Modified</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="modalFilesTableBody">
+                  <!-- Files will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents List Section (Legacy - kept for uploaded files) -->
+    <div class="documents-section" style="display: none;">
       <div class="section-title">
         <i class="fas fa-list"></i>
         Document Archive
@@ -796,6 +1401,15 @@
     // Document storage
     let documentsData = JSON.parse(localStorage.getItem('documentsArchive')) || [];
     let selectedFiles = [];
+    let currentFolderId = null;
+    let sharedFolders = [];
+    let currentFiles = [];
+    let currentSubfolders = [];
+    let folderNavigationStack = []; // Track folder navigation for breadcrumb
+
+    // OneDrive Configuration
+    const OWNER_EMAIL = 'bkoya@evoketechnologies.com';
+    const SHARED_FOLDER_NAME = 'Documents';
 
     // Initialize the application
     document.addEventListener('DOMContentLoaded', function() {
@@ -803,6 +1417,7 @@
       initializeDocuments();
       loadDocuments();
       updateStatistics();
+      loadSharedFolders(); // Load shared folders on startup
       
       // Ensure buttons are in correct initial state
       document.getElementById('saveButton').disabled = true;
@@ -1435,6 +2050,646 @@
       setTimeout(() => {
         statusDiv.style.display = 'none';
       }, 5000);
+    }
+
+    // ==================== OneDrive Shared Folders Functions ====================
+
+    // Load shared folders from OneDrive
+    async function loadSharedFolders() {
+      const foldersGrid = document.getElementById('foldersGrid');
+      
+      // Show loading state
+      foldersGrid.innerHTML = `
+        <div class="loading-container" style="grid-column: 1 / -1;">
+          <i class="fas fa-spinner fa-spin"></i>
+          <div class="loading-text">Loading shared folders from ${OWNER_EMAIL}...</div>
+        </div>
+      `;
+
+      try {
+        // Check if authenticated
+        if (!globalAuth || !globalAuth.isAuthenticated) {
+          // Try to authenticate
+          await authenticateUser();
+        }
+
+        if (!globalAuth.accessToken) {
+          throw new Error('Not authenticated. Please sign in first.');
+        }
+
+        // Search for the shared folder by owner email and folder name
+        const searchQuery = `"${SHARED_FOLDER_NAME}"`;
+        const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${encodeURIComponent(searchQuery)}')`;
+        
+        console.log('Searching for folder:', searchUrl);
+        
+        const response = await fetch(searchUrl, {
+          headers: {
+            'Authorization': `Bearer ${globalAuth.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to search folders: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Search results:', data);
+
+        // Filter for folders shared by the specific owner
+        let targetFolder = null;
+        
+        // First, try to find in shared with me
+        const sharedUrl = 'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe';
+        const sharedResponse = await fetch(sharedUrl, {
+          headers: {
+            'Authorization': `Bearer ${globalAuth.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (sharedResponse.ok) {
+          const sharedData = await sharedResponse.json();
+          console.log('Shared with me:', sharedData);
+          
+          // Find the Documents folder shared by the owner
+          targetFolder = sharedData.value.find(item => 
+            item.name === SHARED_FOLDER_NAME && 
+            item.folder && 
+            item.remoteItem && 
+            item.remoteItem.parentReference && 
+            item.remoteItem.parentReference.driveId
+          );
+        }
+
+        // If not found in shared with me, try search results
+        if (!targetFolder && data.value && data.value.length > 0) {
+          targetFolder = data.value.find(item => 
+            item.name === SHARED_FOLDER_NAME && item.folder
+          );
+        }
+
+        if (!targetFolder) {
+          throw new Error(`Folder "${SHARED_FOLDER_NAME}" shared by ${OWNER_EMAIL} not found. Please ensure the folder is shared with your account.`);
+        }
+
+        console.log('Target folder found:', targetFolder);
+
+        // Get subfolders from the Documents folder
+        const driveId = targetFolder.remoteItem ? targetFolder.remoteItem.parentReference.driveId : targetFolder.parentReference.driveId;
+        const itemId = targetFolder.remoteItem ? targetFolder.remoteItem.id : targetFolder.id;
+        
+        const childrenUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/children`;
+        console.log('Fetching children from:', childrenUrl);
+        
+        const childrenResponse = await fetch(childrenUrl, {
+          headers: {
+            'Authorization': `Bearer ${globalAuth.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!childrenResponse.ok) {
+          throw new Error(`Failed to load folder contents: ${childrenResponse.status}`);
+        }
+
+        const childrenData = await childrenResponse.json();
+        console.log('Folder contents:', childrenData);
+
+        // Filter for folders only
+        sharedFolders = childrenData.value.filter(item => item.folder).map(folder => ({
+          id: folder.id,
+          name: folder.name,
+          driveId: driveId,
+          itemCount: folder.folder.childCount || 0,
+          webUrl: folder.webUrl,
+          lastModified: folder.lastModifiedDateTime
+        }));
+
+        console.log('Found subfolders:', sharedFolders);
+
+        // Display folders as tiles
+        displayFolderTiles(sharedFolders);
+        
+        showStatus('success', `Loaded ${sharedFolders.length} folders from ${OWNER_EMAIL}`);
+
+      } catch (error) {
+        console.error('Error loading shared folders:', error);
+        foldersGrid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <i class="fas fa-exclamation-circle"></i>
+            <div class="empty-state-text">Error Loading Folders</div>
+            <div class="empty-state-subtext">${error.message}</div>
+            <button class="upload-btn" onclick="loadSharedFolders()" style="margin-top: 20px;">
+              <i class="fas fa-redo"></i>
+              Try Again
+            </button>
+          </div>
+        `;
+        showStatus('error', error.message);
+      }
+    }
+
+    // Display folder tiles - Project Portfolio Style
+    function displayFolderTiles(folders) {
+      const foldersGrid = document.getElementById('foldersGrid');
+      
+      if (folders.length === 0) {
+        foldersGrid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <i class="fas fa-folder-open"></i>
+            <div class="empty-state-text">No Folders Found</div>
+            <div class="empty-state-subtext">The shared Documents folder appears to be empty</div>
+          </div>
+        `;
+        return;
+      }
+
+      foldersGrid.innerHTML = '';
+      
+      // Define folder icons mapping
+      const folderIcons = {
+        'Financials': 'fas fa-dollar-sign',
+        'Incorporation': 'fas fa-building',
+        'Insurance': 'fas fa-shield-alt',
+        'Management': 'fas fa-users-cog',
+        'Subsidiaries': 'fas fa-sitemap'
+      };
+
+      folders.forEach((folder, index) => {
+        const folderTile = document.createElement('div');
+        folderTile.className = 'folder-tile';
+        folderTile.onclick = () => openFolder(folder);
+        
+        const iconClass = folderIcons[folder.name] || 'fas fa-folder';
+        const itemsText = folder.itemCount === 1 ? 'item' : 'items';
+        const lastModified = folder.lastModified ? new Date(folder.lastModified).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A';
+        
+        folderTile.innerHTML = `
+          <div class="folder-tile-header">
+            <h3 class="folder-name">${folder.name}</h3>
+            <i class="fas fa-star folder-star" onclick="event.stopPropagation(); toggleStar(this)"></i>
+          </div>
+          <div class="folder-tile-body">
+            <div class="folder-icon-wrapper">
+              <div class="folder-icon-circle">
+                <i class="${iconClass} folder-icon"></i>
+              </div>
+              ${folder.itemCount > 0 ? `<div class="folder-badge">${folder.itemCount}</div>` : ''}
+            </div>
+            <p class="folder-count">${folder.itemCount} ${itemsText}</p>
+            <p class="folder-modified">Modified: ${lastModified}</p>
+          </div>
+        `;
+        foldersGrid.appendChild(folderTile);
+      });
+    }
+
+    // Toggle star favorite
+    function toggleStar(element) {
+      element.classList.toggle('starred');
+      const folderName = element.parentElement.querySelector('.folder-name').textContent;
+      
+      if (element.classList.contains('starred')) {
+        showStatus('success', `${folderName} added to favorites`);
+      } else {
+        showStatus('success', `${folderName} removed from favorites`);
+      }
+    }
+
+    // Open folder and display files in modal
+    async function openFolder(folder, isSubfolder = false) {
+      console.log('=== openFolder called ===');
+      console.log('Folder:', folder);
+      console.log('Is Subfolder:', isSubfolder);
+      
+      const modalFolderName = document.getElementById('modalFolderName');
+      const modalFilesTableBody = document.getElementById('modalFilesTableBody');
+      const modalSubfoldersGrid = document.getElementById('modalSubfoldersGrid');
+      const modalSubfoldersSection = document.getElementById('modalSubfoldersSection');
+      const modalFilesSection = document.getElementById('modalFilesSection');
+      const filesModal = document.getElementById('filesModal');
+      
+      // Destroy existing DataTable before any changes
+      if (window.$ && $.fn.DataTable && $.fn.DataTable.isDataTable('#modalFilesTable')) {
+        console.log('Destroying DataTable before loading new content');
+        $('#modalFilesTable').DataTable().destroy();
+      }
+      
+      // Update current folder ID
+      currentFolderId = folder.id;
+      
+      // Update navigation stack
+      if (!isSubfolder) {
+        // Reset navigation for new root folder
+        folderNavigationStack = [{ id: folder.id, name: folder.name, driveId: folder.driveId }];
+      } else {
+        // Add subfolder to navigation
+        folderNavigationStack.push({ id: folder.id, name: folder.name, driveId: folder.driveId });
+      }
+      
+      console.log('Navigation stack:', folderNavigationStack);
+      
+      // Update modal title and breadcrumb
+      modalFolderName.textContent = folder.name;
+      updateBreadcrumb();
+      
+      // Show modal with loading state (only if not already open)
+      if (!filesModal.classList.contains('active')) {
+        filesModal.classList.add('active');
+      }
+      
+      // Clear previous content
+      modalSubfoldersSection.style.display = 'none';
+      modalSubfoldersGrid.innerHTML = '';
+      modalFilesSection.style.display = 'block';
+      modalFilesTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 40px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3498db;"></i>
+            <div style="margin-top: 15px; color: #7f8c8d;">Loading contents from ${folder.name}...</div>
+          </td>
+        </tr>
+      `;
+
+      try {
+        // Determine the correct driveId
+        const driveId = folder.driveId;
+        const itemId = folder.id;
+        
+        console.log('Opening folder:', { name: folder.name, driveId, itemId, isSubfolder });
+        
+        // Get contents from the folder
+        const contentsUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/children`;
+        console.log('Fetching contents from:', contentsUrl);
+        
+        const response = await fetch(contentsUrl, {
+          headers: {
+            'Authorization': `Bearer ${globalAuth.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error:', response.status, errorText);
+          throw new Error(`Failed to load contents: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Folder contents received:', data);
+
+        // Separate subfolders and files
+        currentSubfolders = data.value.filter(item => item.folder).map(subfolder => ({
+          id: subfolder.id,
+          name: subfolder.name,
+          driveId: driveId, // Use the same driveId
+          itemCount: subfolder.folder.childCount || 0,
+          lastModified: subfolder.lastModifiedDateTime
+        }));
+
+        currentFiles = data.value.filter(item => item.file).map(file => ({
+          id: file.id,
+          name: file.name,
+          driveId: driveId, // Use the same driveId
+          size: file.size,
+          downloadUrl: file['@microsoft.graph.downloadUrl'],
+          webUrl: file.webUrl,
+          mimeType: file.file.mimeType,
+          lastModified: file.lastModifiedDateTime
+        }));
+
+        console.log(`Found ${currentSubfolders.length} subfolders and ${currentFiles.length} files`);
+
+        // Display subfolders if any
+        if (currentSubfolders.length > 0) {
+          displaySubfoldersInModal(currentSubfolders);
+          modalSubfoldersSection.style.display = 'block';
+        } else {
+          modalSubfoldersSection.style.display = 'none';
+        }
+
+        // Display files
+        displayFilesInModal(currentFiles);
+        
+        showStatus('success', `Loaded ${currentSubfolders.length} folders and ${currentFiles.length} files from ${folder.name}`);
+
+      } catch (error) {
+        console.error('Error loading folder contents:', error);
+        modalSubfoldersSection.style.display = 'none';
+        modalFilesTableBody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="modal-empty-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <div style="font-size: 18px; font-weight: 500; margin-bottom: 10px;">Error Loading Contents</div>
+                <div style="font-size: 14px;">${error.message}</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        showStatus('error', error.message);
+      }
+    }
+
+    // Display subfolders in modal as tiles
+    function displaySubfoldersInModal(subfolders) {
+      const modalSubfoldersGrid = document.getElementById('modalSubfoldersGrid');
+      modalSubfoldersGrid.innerHTML = '';
+      
+      console.log('Displaying subfolders:', subfolders);
+      
+      subfolders.forEach(subfolder => {
+        const tile = document.createElement('div');
+        tile.className = 'modal-subfolder-tile';
+        tile.onclick = () => {
+          console.log('Subfolder clicked:', subfolder);
+          openFolder(subfolder, true); // true indicates it's a subfolder
+        };
+        
+        const itemsText = subfolder.itemCount === 1 ? 'item' : 'items';
+        
+        tile.innerHTML = `
+          <div class="modal-subfolder-icon">
+            <i class="fas fa-folder"></i>
+          </div>
+          <div class="modal-subfolder-name">${subfolder.name}</div>
+          <div class="modal-subfolder-count">${subfolder.itemCount} ${itemsText}</div>
+        `;
+        
+        modalSubfoldersGrid.appendChild(tile);
+      });
+    }
+
+    // Update breadcrumb navigation
+    function updateBreadcrumb() {
+      const breadcrumb = document.getElementById('modalBreadcrumb');
+      
+      if (folderNavigationStack.length <= 1) {
+        breadcrumb.style.display = 'none';
+        return;
+      }
+      
+      breadcrumb.style.display = 'flex';
+      breadcrumb.innerHTML = '<i class="fas fa-home" style="color: #3498db; margin-right: 5px;"></i>';
+      
+      folderNavigationStack.forEach((folder, index) => {
+        const isLast = index === folderNavigationStack.length - 1;
+        
+        const item = document.createElement('span');
+        item.className = `breadcrumb-item ${isLast ? 'active' : ''}`;
+        item.textContent = folder.name;
+        
+        if (!isLast) {
+          item.onclick = () => navigateToFolder(index);
+        }
+        
+        breadcrumb.appendChild(item);
+        
+        if (!isLast) {
+          const separator = document.createElement('span');
+          separator.className = 'breadcrumb-separator';
+          separator.innerHTML = '<i class="fas fa-chevron-right"></i>';
+          breadcrumb.appendChild(separator);
+        }
+      });
+    }
+
+    // Navigate to a folder in the breadcrumb
+    function navigateToFolder(index) {
+      // Remove folders after the clicked index
+      folderNavigationStack = folderNavigationStack.slice(0, index + 1);
+      
+      // Navigate to the selected folder
+      const folder = folderNavigationStack[index];
+      
+      // Remove the folder from stack temporarily as openFolder will add it back
+      folderNavigationStack.pop();
+      
+      openFolder(folder, index > 0);
+    }
+
+    // Display files in modal DataGrid
+    function displayFilesInModal(files) {
+      const modalFilesTableBody = document.getElementById('modalFilesTableBody');
+      
+      console.log('displayFilesInModal called with', files.length, 'files');
+      console.log('Files:', files);
+      
+      if (files.length === 0) {
+        modalFilesTableBody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              <div class="modal-empty-state">
+                <i class="fas fa-folder-open"></i>
+                <div style="font-size: 18px; font-weight: 500; margin-bottom: 10px;">No Files Found</div>
+                <div style="font-size: 14px;">This folder appears to be empty</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      modalFilesTableBody.innerHTML = '';
+      
+      files.forEach(file => {
+        const row = document.createElement('tr');
+        const iconClass = getFileIconClass(file.name);
+        const fileSize = formatFileSize(file.size);
+        const fileType = getFileType(file.name);
+        const lastModified = new Date(file.lastModified).toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric',
+          year: 'numeric'
+        });
+        
+        row.innerHTML = `
+          <td>
+            <i class="${iconClass} modal-file-icon"></i>
+            <strong>${file.name}</strong>
+          </td>
+          <td>${fileType}</td>
+          <td>${fileSize}</td>
+          <td>${lastModified}</td>
+          <td>
+            <button class="modal-action-btn" onclick="viewOneDriveFile('${file.webUrl}')">
+              <i class="fas fa-eye"></i>
+              View
+            </button>
+            <button class="modal-action-btn download" onclick="downloadOneDriveFile('${file.downloadUrl}', '${file.name}')">
+              <i class="fas fa-download"></i>
+              Download
+            </button>
+          </td>
+        `;
+        
+        modalFilesTableBody.appendChild(row);
+      });
+
+      // Initialize DataTable if jQuery and DataTables are available
+      if (window.$ && $.fn.DataTable) {
+        // Destroy existing DataTable if it exists
+        if ($.fn.DataTable.isDataTable('#modalFilesTable')) {
+          console.log('Destroying existing DataTable');
+          $('#modalFilesTable').DataTable().destroy();
+        }
+        
+        // Initialize new DataTable
+        setTimeout(() => {
+          console.log('Initializing DataTable with', files.length, 'files');
+          $('#modalFilesTable').DataTable({
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            order: [[3, 'desc']], // Sort by last modified descending
+            language: {
+              search: "_INPUT_",
+              searchPlaceholder: "Search files...",
+              lengthMenu: "Show _MENU_ files per page",
+              info: "Showing _START_ to _END_ of _TOTAL_ files"
+            },
+            columnDefs: [
+              {
+                targets: 4, // Actions column
+                orderable: false,
+                searchable: false
+              }
+            ],
+            drawCallback: function() {
+              console.log('DataTable draw complete');
+            }
+          });
+        }, 150);
+      }
+    }
+
+    // Close files modal
+    function closeFilesModal(event) {
+      // If event is provided and it's not clicking the overlay, don't close
+      if (event && event.target.id !== 'filesModal') {
+        return;
+      }
+      
+      const filesModal = document.getElementById('filesModal');
+      filesModal.classList.remove('active');
+      
+      // Destroy DataTable if it exists
+      if (window.$ && $.fn.DataTable && $.fn.DataTable.isDataTable('#modalFilesTable')) {
+        $('#modalFilesTable').DataTable().destroy();
+      }
+      
+      // Reset navigation
+      currentFolderId = null;
+      currentFiles = [];
+      currentSubfolders = [];
+      folderNavigationStack = [];
+      
+      // Hide breadcrumb
+      document.getElementById('modalBreadcrumb').style.display = 'none';
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeFilesModal();
+      }
+    });
+
+    // Get file icon class
+    function getFileIconClass(fileName) {
+      const extension = fileName.split('.').pop().toLowerCase();
+      const iconMap = {
+        'pdf': 'fas fa-file-pdf file-icon pdf',
+        'doc': 'fas fa-file-word file-icon doc',
+        'docx': 'fas fa-file-word file-icon docx',
+        'xls': 'fas fa-file-excel file-icon xls',
+        'xlsx': 'fas fa-file-excel file-icon xlsx',
+        'ppt': 'fas fa-file-powerpoint file-icon ppt',
+        'pptx': 'fas fa-file-powerpoint file-icon pptx',
+        'txt': 'fas fa-file-alt file-icon txt',
+        'jpg': 'fas fa-file-image file-icon img',
+        'jpeg': 'fas fa-file-image file-icon img',
+        'png': 'fas fa-file-image file-icon img',
+        'gif': 'fas fa-file-image file-icon img',
+        'zip': 'fas fa-file-archive file-icon zip',
+        'rar': 'fas fa-file-archive file-icon zip',
+        'mp4': 'fas fa-file-video file-icon',
+        'avi': 'fas fa-file-video file-icon',
+        'mov': 'fas fa-file-video file-icon'
+      };
+      return iconMap[extension] || 'fas fa-file file-icon default';
+    }
+
+    // View file in OneDrive
+    function viewOneDriveFile(webUrl) {
+      window.open(webUrl, '_blank');
+      showStatus('success', 'Opening file in OneDrive...');
+    }
+
+    // Download file from OneDrive
+    async function downloadOneDriveFile(downloadUrl, fileName) {
+      try {
+        showStatus('loading', `Downloading ${fileName}...`);
+        
+        // Create a temporary link to trigger download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showStatus('success', `Download started: ${fileName}`);
+      } catch (error) {
+        console.error('Download error:', error);
+        showStatus('error', `Failed to download ${fileName}: ${error.message}`);
+      }
+    }
+
+    // Back to folders view
+    function backToFolders() {
+      const filesSection = document.getElementById('filesSection');
+      filesSection.style.display = 'none';
+      currentFolderId = null;
+      currentFiles = [];
+      
+      // Scroll back to folders
+      document.getElementById('foldersGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Authenticate user
+    async function authenticateUser() {
+      if (!msalInstance) {
+        throw new Error('MSAL not configured. Please check config.js');
+      }
+
+      try {
+        showStatus('loading', 'Signing in...');
+        
+        const loginResponse = await msalInstance.loginPopup({
+          scopes: ['User.Read', 'Files.Read', 'Files.Read.All', 'Sites.Read.All'],
+          prompt: 'select_account'
+        });
+
+        console.log('Login successful:', loginResponse);
+
+        globalAuth.isAuthenticated = true;
+        globalAuth.account = loginResponse.account;
+        globalAuth.userName = loginResponse.account.name;
+        globalAuth.accessToken = loginResponse.accessToken;
+
+        updateHeaderUI();
+        showStatus('success', `Signed in as ${globalAuth.userName}`);
+        
+        return loginResponse;
+
+      } catch (error) {
+        console.error('Authentication error:', error);
+        showStatus('error', `Authentication failed: ${error.message}`);
+        throw error;
+      }
     }
   </script>
 </body>
