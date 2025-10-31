@@ -1409,7 +1409,7 @@
 
     // OneDrive Configuration
     const OWNER_EMAIL = 'bkoya@evoketechnologies.com';
-    const SHARED_FOLDER_NAME = 'Documents';
+    const SHARED_FOLDER_NAME = 'Statutory';
 
     // Initialize the application
     document.addEventListener('DOMContentLoaded', function() {
@@ -2105,7 +2105,7 @@
           // Owner accessing their own folder - use personal drive
           console.log('Owner detected - accessing personal drive');
           
-          // Search in user's own drive for the Documents folder
+          // Search in user's own drive for the Statutory folder
           const searchQuery = `"${SHARED_FOLDER_NAME}"`;
           const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${encodeURIComponent(searchQuery)}')`;
           
@@ -2125,14 +2125,20 @@
           const data = await response.json();
           console.log('Search results:', data);
 
-          // Find the Documents folder
-          targetFolder = data.value.find(item => 
+          // Find all folders with the specified name
+          const matchingFolders = data.value.filter(item => 
             item.name === SHARED_FOLDER_NAME && item.folder
           );
           
-          if (targetFolder) {
+          console.log('Found matching folders:', matchingFolders.length);
+          
+          if (matchingFolders.length > 0) {
+            // Use the first match (or add logic to select the correct one)
+            targetFolder = matchingFolders[0];
             driveId = targetFolder.parentReference.driveId;
             itemId = targetFolder.id;
+            console.log('Selected folder:', targetFolder);
+            console.log('Folder path:', targetFolder.parentReference.path);
           }
         } else {
           // Non-owner accessing shared folder
