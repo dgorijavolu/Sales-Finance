@@ -2077,69 +2077,131 @@
           throw new Error('Not authenticated. Please sign in first.');
         }
 
-        // Search for the shared folder by owner email and folder name
-        const searchQuery = `"${SHARED_FOLDER_NAME}"`;
-        const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${encodeURIComponent(searchQuery)}')`;
-        
-        console.log('Searching for folder:', searchUrl);
-        
-        const response = await fetch(searchUrl, {
+        // Get current user's email to check if they are the owner
+        const userProfileUrl = 'https://graph.microsoft.com/v1.0/me';
+        const userProfileResponse = await fetch(userProfileUrl, {
           headers: {
             'Authorization': `Bearer ${globalAuth.accessToken}`,
             'Content-Type': 'application/json'
           }
         });
-
-        if (!response.ok) {
-          throw new Error(`Failed to search folders: ${response.status} ${response.statusText}`);
+        
+        if (!userProfileResponse.ok) {
+          throw new Error('Failed to get user profile');
         }
-
-        const data = await response.json();
-        console.log('Search results:', data);
-
-        // Filter for folders shared by the specific owner
+        
+        const userProfile = await userProfileResponse.json();
+        const currentUserEmail = userProfile.mail || userProfile.userPrincipalName;
+        console.log('Current user email:', currentUserEmail);
+        
         let targetFolder = null;
+        let driveId = null;
+        let itemId = null;
+        let isOwner = currentUserEmail.toLowerCase() === OWNER_EMAIL.toLowerCase();
         
-        // First, try to find in shared with me
-        const sharedUrl = 'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe';
-        const sharedResponse = await fetch(sharedUrl, {
-          headers: {
-            'Authorization': `Bearer ${globalAuth.accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (sharedResponse.ok) {
-          const sharedData = await sharedResponse.json();
-          console.log('Shared with me:', sharedData);
+        console.log('Is owner:', isOwner);
+        
+        if (isOwner) {
+          // Owner accessing their own folder - use personal drive
+          console.log('Owner detected - accessing personal drive');
           
-          // Find the Documents folder shared by the owner
-          targetFolder = sharedData.value.find(item => 
-            item.name === SHARED_FOLDER_NAME && 
-            item.folder && 
-            item.remoteItem && 
-            item.remoteItem.parentReference && 
-            item.remoteItem.parentReference.driveId
-          );
-        }
+          // Search in user's own drive for the Documents folder
+          const searchQuery = `"${SHARED_FOLDER_NAME}"`;
+          const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${encodeURIComponent(searchQuery)}')`;
+          
+          console.log('Searching for folder in personal drive:', searchUrl);
+          
+          const response = await fetch(searchUrl, {
+            headers: {
+              'Authorization': `Bearer ${globalAuth.accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
 
-        // If not found in shared with me, try search results
-        if (!targetFolder && data.value && data.value.length > 0) {
+          if (!response.ok) {
+            throw new Error(`Failed to search folders: ${response.status} ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          console.log('Search results:', data);
+
+          // Find the Documents folder
           targetFolder = data.value.find(item => 
             item.name === SHARED_FOLDER_NAME && item.folder
           );
+          
+          if (targetFolder) {
+            driveId = targetFolder.parentReference.driveId;
+            itemId = targetFolder.id;
+          }
+        } else {
+          // Non-owner accessing shared folder
+          console.log('Non-owner detected - accessing shared folder');
+          
+          // Search for the shared folder by owner email and folder name
+          const searchQuery = `"${SHARED_FOLDER_NAME}"`;
+          const searchUrl = `https://graph.microsoft.com/v1.0/me/drive/root/search(q='${encodeURIComponent(searchQuery)}')`;
+          
+          console.log('Searching for folder:', searchUrl);
+          
+          const response = await fetch(searchUrl, {
+            headers: {
+              'Authorization': `Bearer ${globalAuth.accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to search folders: ${response.status} ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          console.log('Search results:', data);
+
+          // First, try to find in shared with me
+          const sharedUrl = 'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe';
+          const sharedResponse = await fetch(sharedUrl, {
+            headers: {
+              'Authorization': `Bearer ${globalAuth.accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (sharedResponse.ok) {
+            const sharedData = await sharedResponse.json();
+            console.log('Shared with me:', sharedData);
+            
+            // Find the Documents folder shared by the owner
+            targetFolder = sharedData.value.find(item => 
+              item.name === SHARED_FOLDER_NAME && 
+              item.folder && 
+              item.remoteItem && 
+              item.remoteItem.parentReference && 
+              item.remoteItem.parentReference.driveId
+            );
+          }
+
+          // If not found in shared with me, try search results
+          if (!targetFolder && data.value && data.value.length > 0) {
+            targetFolder = data.value.find(item => 
+              item.name === SHARED_FOLDER_NAME && item.folder
+            );
+          }
+
+          if (targetFolder) {
+            driveId = targetFolder.remoteItem ? targetFolder.remoteItem.parentReference.driveId : targetFolder.parentReference.driveId;
+            itemId = targetFolder.remoteItem ? targetFolder.remoteItem.id : targetFolder.id;
+          }
         }
 
         if (!targetFolder) {
-          throw new Error(`Folder "${SHARED_FOLDER_NAME}" shared by ${OWNER_EMAIL} not found. Please ensure the folder is shared with your account.`);
+          throw new Error(`Folder "${SHARED_FOLDER_NAME}" not found. Please ensure the folder exists${isOwner ? '' : ' and is shared with your account'}.`);
         }
 
         console.log('Target folder found:', targetFolder);
+        console.log('Drive ID:', driveId, 'Item ID:', itemId);
 
         // Get subfolders from the Documents folder
-        const driveId = targetFolder.remoteItem ? targetFolder.remoteItem.parentReference.driveId : targetFolder.parentReference.driveId;
-        const itemId = targetFolder.remoteItem ? targetFolder.remoteItem.id : targetFolder.id;
-        
         const childrenUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/children`;
         console.log('Fetching children from:', childrenUrl);
         
@@ -2172,7 +2234,7 @@
         // Display folders as tiles
         displayFolderTiles(sharedFolders);
         
-        showStatus('success', `Loaded ${sharedFolders.length} folders from ${OWNER_EMAIL}`);
+        showStatus('success', `Loaded ${sharedFolders.length} folders`);
 
       } catch (error) {
         console.error('Error loading shared folders:', error);
